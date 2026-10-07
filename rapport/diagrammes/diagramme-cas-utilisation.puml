@@ -1,0 +1,241 @@
+@startuml diagramme-cas-utilisation-general
+' =====================================================================
+'  Medicacom AOI Transformation — Cas d'utilisation general (simplifie)
+'
+'  11 acteurs reels (backend/app/core/rbac.py) et 24 cas d'utilisation
+'  regroupes par etape du parcours. Chaque acteur a sa couleur de lien,
+'  pour suivre d'un coup d'oeil ce qu'un role peut declencher.
+'
+'  Version exhaustive (48 cas d'utilisation, 11 modules) :
+'      diagramme-cas-utilisation-detaille.puml
+'
+'  Rendu :  java -jar plantuml.jar -tsvg diagramme-cas-utilisation.puml
+' =====================================================================
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam nodesep 25
+skinparam ranksep 55
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 13
+
+skinparam actor {
+  BackgroundColor #E6F1EB
+  BorderColor #0F5E44
+  BorderThickness 1.6
+  FontColor #16241E
+  FontSize 12
+  FontStyle bold
+}
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #157F5C
+  BorderThickness 1.4
+  FontColor #16241E
+  FontSize 13
+  StereotypeFontColor #5E6F67
+}
+skinparam rectangle {
+  BackgroundColor #FAFCFB
+  BorderColor #C9D8D0
+  BorderThickness 1.4
+  FontColor #0F5E44
+  FontSize 14
+  FontStyle bold
+}
+skinparam package {
+  BackgroundColor #F5F8F6
+  BorderColor #C9D8D0
+  BorderThickness 1.2
+  FontColor #0F5E44
+  FontSize 13
+  FontStyle bold
+}
+skinparam note {
+  BackgroundColor #E6F1EB
+  BorderColor #157F5C
+  BorderThickness 1.4
+  FontColor #16241E
+  FontSize 12
+}
+
+left to right direction
+title Medicacom AOI Transformation — Diagramme de cas d'utilisation general
+
+' =====================================================================
+'  Acteurs
+' =====================================================================
+actor "Administrateur\nentreprise" as AdminEnt
+actor "Direction\nGenerale" as Direction
+actor "Responsable de\ndepartement" as Responsable
+actor "Contributeur\nmetier" as Contributeur
+actor "DSI /\nData Office" as DSI
+actor "AI Lead" as AILead
+actor "Finance" as Finance
+actor "PMO" as PMO
+actor "Auditeur" as Auditeur
+
+' =====================================================================
+'  Systeme
+' =====================================================================
+rectangle "Medicacom AOI Transformation" {
+
+  usecase "Se connecter" as UC01
+
+  package "1. Diagnostiquer" {
+    usecase "Realiser le diagnostic\nde maturite" as UC10
+    usecase "Consulter le readiness\net les dimensions bloquantes" as UC11
+  }
+
+  package "2. Cartographier" {
+    usecase "Tenir le referentiel\nAS-IS" as UC20
+    usecase "Declarer une dependance\ninterservices" as UC21
+    usecase "Detecter les doublons\nentre besoins" as UC22
+  }
+
+  package "3. Qualifier" {
+    usecase "Exprimer un besoin\nmetier" as UC30
+    usecase "Creer une opportunite" as UC31
+    usecase "Qualifier le type\nde solution" as UC32
+    usecase "Consulter la recommandation\net sa justification" as UC33
+    usecase "Amender la\nrecommandation" as UC34
+  }
+
+  package "4. Arbitrer" {
+    usecase "Consulter le portefeuille\npriorise" as UC40
+    usecase "Ajuster les ponderations\net reprioriser" as UC41
+    usecase "Generer la\nfiche projet" as UC42
+    usecase "Decider en comite" as UC43
+  }
+
+  package "5. Executer" {
+    usecase "Piloter un projet" as UC50
+    usecase "Franchir une gate\nde phase" as UC51
+    usecase "Gerer risques\net incidents" as UC52
+  }
+
+  package "6. Mesurer la valeur" {
+    usecase "Saisir couts\net benefices" as UC60
+    usecase "Calculer TCO, ROI\net payback" as UC61
+    usecase "Consulter les\ntableaux de bord" as UC62
+  }
+
+  package "7. Gouverner" {
+    usecase "Administrer sites,\ndepartements, utilisateurs" as UC70
+    usecase "Gerer roles\net permissions" as UC71
+    usecase "Journaliser toute\nmodification" as UC72
+    usecase "Consulter le\njournal d'audit" as UC73
+  }
+}
+
+' =====================================================================
+'  Associations acteur -> cas d'utilisation, une couleur par acteur
+' =====================================================================
+
+' -- Tous les acteurs
+AdminEnt     -[#0F5E44,thickness=2]-> UC01
+Direction    -[#A66A16,thickness=2]-> UC01
+Responsable  -[#157F5C,thickness=2]-> UC01
+Contributeur -[#1E9C72,thickness=2]-> UC01
+DSI          -[#1C6B7D,thickness=2]-> UC01
+AILead       -[#7A3E9D,thickness=2]-> UC01
+Finance      -[#B2761A,thickness=2]-> UC01
+PMO          -[#2E6FB7,thickness=2]-> UC01
+Auditeur     -[#B23A3A,thickness=2]-> UC01
+
+' -- Administrateur entreprise
+AdminEnt -[#0F5E44,thickness=2]-> UC70
+AdminEnt -[#0F5E44,thickness=2]-> UC71
+AdminEnt -[#0F5E44,thickness=2]-> UC73
+
+' -- Direction Generale
+Direction -[#A66A16,thickness=2]-> UC11
+Direction -[#A66A16,thickness=2]-> UC40
+Direction -[#A66A16,thickness=2]-> UC41
+Direction -[#A66A16,thickness=2]-> UC43
+Direction -[#A66A16,thickness=2]-> UC51
+Direction -[#A66A16,thickness=2]-> UC62
+
+' -- Responsable de departement
+Responsable -[#157F5C,thickness=2]-> UC10
+Responsable -[#157F5C,thickness=2]-> UC31
+Responsable -[#157F5C,thickness=2]-> UC42
+Responsable -[#157F5C,thickness=2]-> UC62
+
+' -- Contributeur metier
+Contributeur -[#1E9C72,thickness=2]-> UC30
+Contributeur -[#1E9C72,thickness=2]-> UC31
+Contributeur -[#1E9C72,thickness=2]-> UC33
+
+' -- DSI / Data Office
+DSI -[#1C6B7D,thickness=2]-> UC20
+DSI -[#1C6B7D,thickness=2]-> UC21
+DSI -[#1C6B7D,thickness=2]-> UC10
+DSI -[#1C6B7D,thickness=2]-> UC51
+
+' -- AI Lead
+AILead -[#7A3E9D,thickness=2]-> UC33
+AILead -[#7A3E9D,thickness=2]-> UC34
+AILead -[#7A3E9D,thickness=2]-> UC51
+
+' -- Finance
+Finance -[#B2761A,thickness=2]-> UC60
+Finance -[#B2761A,thickness=2]-> UC61
+Finance -[#B2761A,thickness=2]-> UC43
+
+' -- PMO
+PMO -[#2E6FB7,thickness=2]-> UC50
+PMO -[#2E6FB7,thickness=2]-> UC52
+PMO -[#2E6FB7,thickness=2]-> UC42
+
+' -- Auditeur (lecture seule)
+Auditeur -[#B23A3A,thickness=2,dashed]-> UC73
+Auditeur -[#B23A3A,thickness=2,dashed]-> UC40
+Auditeur -[#B23A3A,thickness=2,dashed]-> UC33
+
+' =====================================================================
+'  Relations entre cas d'utilisation
+' =====================================================================
+UC31 .[#157F5C,thickness=2].> UC32 : <<include>>
+UC32 .[#157F5C,thickness=2].> UC33 : <<include>>
+UC10 .[#157F5C,thickness=2].> UC11 : <<include>>
+UC41 .[#A66A16,thickness=2].> UC40 : <<include>>
+UC42 .[#A66A16,thickness=2].> UC43 : <<extend>>
+UC60 .[#1C6B7D,thickness=2].> UC61 : <<include>>
+UC21 .[#1C6B7D,thickness=2].> UC22 : <<extend>>
+UC51 .[#5E6F67,thickness=2].> UC72 : <<include>>
+UC41 .[#5E6F67,thickness=2].> UC72 : <<include>>
+UC43 .[#5E6F67,thickness=2].> UC72 : <<include>>
+
+note bottom of UC72
+  Cas d'utilisation <b>systeme</b> : aucun acteur ne le
+  declenche directement. Toute ecriture significative
+  l'inclut, et l'entree produite est immuable.
+end note
+
+note as N2
+  <b>Lecture des liens</b>
+  Trait plein : action autorisee.
+  Trait pointille rouge : acces en <b>lecture seule</b>.
+  Les liens disent <i>quelle action</i> un role declenche,
+  pas <i>sur quelles donnees</i> : hors perimetre, une ecriture
+  recoit <b>403</b> et une lecture <b>404</b>.
+end note
+
+legend bottom
+  |= Couleur |= Acteur |
+  | <back:#0F5E44>       </back> | Administrateur entreprise |
+  | <back:#A66A16>       </back> | Direction Generale |
+  | <back:#157F5C>       </back> | Responsable de departement |
+  | <back:#1E9C72>       </back> | Contributeur metier |
+  | <back:#1C6B7D>       </back> | DSI / Data Office |
+  | <back:#7A3E9D>       </back> | AI Lead |
+  | <back:#B2761A>       </back> | Finance |
+  | <back:#2E6FB7>       </back> | PMO |
+  | <back:#B23A3A>       </back> | Auditeur (lecture seule) |
+  L'<b>Administrateur Medicacom</b>, 11e role, porte les 41 permissions
+  sur l'ensemble des organisations : il n'est pas represente pour
+  ne pas relier un acteur a tous les cas d'utilisation.
+endlegend
+
+@enduml

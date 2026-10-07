@@ -1,0 +1,411 @@
+@startuml diagramme-classes-general
+' =====================================================================
+'  Medicacom AOI Transformation — Diagramme de classes general (simplifie)
+'
+'  30 entites reelles du schema, issues de backend/app/models/.
+'  Version allegee, destinee a la lecture : les cles etrangeres ne sont
+'  plus listees en attributs — elles sont portees par les associations.
+'  Les 4 tables d'association deviennent des liens plusieurs-a-plusieurs.
+'
+'  Version exhaustive (34 classes, tous les attributs, toutes les FK) :
+'      diagramme-classes-detaille.puml
+'
+'  Rendu :  java -jar plantuml.jar -tsvg diagramme-classes.puml
+' =====================================================================
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 45
+skinparam ranksep 55
+skinparam packageStyle rectangle
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 13
+
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #0F5E44
+  BorderThickness 1.4
+  FontColor #16241E
+  FontSize 14
+  FontStyle bold
+  AttributeFontColor #16241E
+  AttributeFontSize 12
+  StereotypeFontColor #5E6F67
+  StereotypeFontSize 11
+}
+skinparam package {
+  BackgroundColor #F5F8F6
+  BorderColor #C9D8D0
+  BorderThickness 1.2
+  FontColor #0F5E44
+  FontSize 14
+  FontStyle bold
+}
+skinparam note {
+  BackgroundColor #E6F1EB
+  BorderColor #157F5C
+  BorderThickness 1.4
+  FontColor #16241E
+  FontSize 12
+}
+
+title Medicacom AOI Transformation — Diagramme de classes general
+
+' =====================================================================
+package "Organisation et droits" as PA {
+
+  class Organization {
+    name
+    code <<unique>>
+    industry
+    country
+  }
+
+  class Site {
+    name
+    code
+    city
+    site_type
+  }
+
+  class Department {
+    name
+    code
+    family
+    head_name
+  }
+
+  class User <<app_user>> {
+    email <<unique>>
+    full_name
+    job_title
+    hashed_password <<bcrypt>>
+    is_active
+  }
+
+  class Role {
+    code
+    label
+    scope_level
+    is_system
+  }
+
+  class Permission {
+    code <<unique>>
+    label
+    module
+  }
+}
+
+' =====================================================================
+package "Diagnostic" as PB {
+
+  class Assessment {
+    name
+    campaign
+    status
+    blocking_threshold
+    completion_rate <<calcule>>
+  }
+
+  class AssessmentResponse {
+    axis
+    dimension_label
+    score [0..5]
+    weight
+    confidence [0..1]
+    is_critical
+    evidence
+  }
+}
+
+' =====================================================================
+package "Referentiel AS-IS" as PC {
+
+  class Process {
+    code
+    name
+    maturity
+    volume_per_month
+    is_gxp
+  }
+
+  class Application {
+    name
+    category
+    criticality
+    validated_gxp
+  }
+
+  class DataSource {
+    name
+    kind
+    quality_score
+    has_ground_truth
+  }
+
+  class KPI {
+    code
+    name
+    unit
+    baseline_value
+    target_value
+    current_value
+  }
+}
+
+' =====================================================================
+package "Opportunites" as PD {
+
+  class Opportunity {
+    code
+    title
+    phase
+    status
+    .. qualification ..
+    15 faits (booleens + volume)
+    answers <<json>>
+    .. priorisation ..
+    6 criteres [0..100]
+    risk_probability [1..5]
+    risk_impact [1..5]
+    priority_score
+    priority_rank
+    wave
+  }
+
+  class AIRecommendation {
+    ai_type
+    solution_pattern
+    confidence
+    fired_rules <<json>>
+    alternatives <<json>>
+    guardrails <<json>>
+  }
+
+  class Dependency {
+    kind
+    label
+    strength
+    is_blocking
+  }
+}
+
+' =====================================================================
+package "Projets" as PE {
+
+  class Project {
+    code
+    name
+    phase
+    status
+    budget_eur
+    committed_eur
+    progress
+  }
+
+  class Stage {
+    code
+    name
+    sequence
+    gate_passed
+  }
+
+  class Milestone {
+    name
+    due_date
+    status
+    is_gate
+  }
+
+  class Task {
+    title
+    assignee
+    status
+    due_date
+  }
+
+  class Risk {
+    title
+    probability [1..5]
+    impact [1..5]
+    severity
+    status
+  }
+
+  class Mitigation {
+    action
+    owner
+    status
+    residual_probability
+  }
+
+  class Issue {
+    title
+    severity
+    status
+  }
+}
+
+' =====================================================================
+package "Valeur" as PF {
+
+  class Cost {
+    label
+    amount_eur
+    recurring <<CAPEX / OPEX>>
+  }
+
+  class Benefit {
+    label
+    annual_amount_eur
+    realization_rate
+    pnl_line
+  }
+
+  class Measurement {
+    measured_on
+    value
+    source
+  }
+}
+
+' =====================================================================
+package "Gouvernance et audit" as PG {
+
+  class Document {
+    code
+    title
+    doc_type
+    status
+    current_version
+  }
+
+  class Version {
+    number
+    label
+    content <<json>>
+  }
+
+  class Approval {
+    committee
+    decision
+    decided_on
+  }
+
+  class Notification {
+    title
+    level
+    is_read
+  }
+
+  class AuditLog <<insertion seule>> {
+    user_email
+    action
+    entity_type
+    old_value <<json>>
+    new_value <<json>>
+    created_at
+  }
+}
+
+' =====================================================================
+'  Associations — Organisation et droits   (vert fonce)
+' =====================================================================
+Organization "1" *-[#0F5E44,thickness=2]- "0..*" Site : héberge >
+Organization "1" *-[#0F5E44,thickness=2]- "0..*" Department
+Organization "1" *-[#0F5E44,thickness=2]- "0..*" User : emploie >
+Organization "1" *-[#0F5E44,thickness=2]- "0..*" Role : définit >
+Site "1" o-[#0F5E44,thickness=2]- "0..*" Department
+User "0..*" -[#0F5E44,thickness=2]- "0..*" Department : rattachement >
+User "0..*" -[#0F5E44,thickness=2]- "0..*" Site
+User "0..*" -[#0F5E44,thickness=2]- "1..*" Role
+Role "0..*" -[#0F5E44,thickness=2]- "0..*" Permission
+
+' =====================================================================
+'  Associations — Diagnostic   (vert accent)
+' =====================================================================
+Department "0..1" o-[#157F5C,thickness=2]- "0..*" Assessment
+Assessment "1" *-[#157F5C,thickness=2]- "1..*" AssessmentResponse : dimensions notées >
+
+' =====================================================================
+'  Associations — Referentiel AS-IS   (teal)
+' =====================================================================
+Department "0..1" o-[#1C6B7D,thickness=2]- "0..*" Process
+Application "0..1" o-[#1C6B7D,thickness=2]- "0..*" DataSource : expose >
+
+' =====================================================================
+'  Associations — Opportunites   (vert accent)
+' =====================================================================
+Department "0..1" o-[#157F5C,thickness=2]- "0..*" Opportunity : porte >
+Process "0..1" o-[#157F5C,thickness=2]- "0..*" Opportunity : améliore >
+Opportunity "1" *-[#157F5C,thickness=3]- "1" AIRecommendation : qualifiée par >
+Opportunity "1" o-[#157F5C,thickness=2]- "0..*" KPI : mesurée par >
+Opportunity "0..*" -[#157F5C,thickness=2]- "0..*" Dependency : source / cible >
+
+' =====================================================================
+'  Associations — Projets   (ambre)
+' =====================================================================
+Opportunity "1" o-[#A66A16,thickness=3]- "0..1" Project : devient >
+Project "1" *-[#A66A16,thickness=2]- "1..*" Stage : phases >
+Stage "1" o-[#A66A16,thickness=2]- "0..*" Milestone
+Stage "1" o-[#A66A16,thickness=2]- "0..*" Task
+Project "1" *-[#A66A16,thickness=2]- "0..*" Risk
+Project "1" *-[#A66A16,thickness=2]- "0..*" Issue
+Risk "1" *-[#A66A16,thickness=2]- "0..*" Mitigation : plan d'action >
+
+' =====================================================================
+'  Associations — Valeur   (teal)
+' =====================================================================
+Opportunity "0..1" o-[#1C6B7D,thickness=2]- "0..*" Cost
+Opportunity "0..1" o-[#1C6B7D,thickness=2]- "0..*" Benefit
+KPI "0..1" o-[#1C6B7D,thickness=2]- "0..*" Benefit : adossé à >
+KPI "1" *-[#1C6B7D,thickness=2]- "0..*" Measurement : relevés >
+
+' =====================================================================
+'  Associations — Gouvernance   (gris) et audit (rouge)
+' =====================================================================
+Opportunity "0..1" o-[#5E6F67,thickness=2]- "0..*" Document
+Project "0..1" o-[#5E6F67,thickness=2]- "0..*" Document
+Document "1" *-[#5E6F67,thickness=2]- "1..*" Version : historise >
+Document "0..1" o-[#5E6F67,thickness=2]- "0..*" Approval
+User "0..1" o-[#5E6F67,thickness=2]- "0..*" Approval : décide >
+User "1" o-[#5E6F67,thickness=2]- "0..*" Notification
+
+' =====================================================================
+'  Notes
+' =====================================================================
+note top of PA
+  <b>Lecture du diagramme</b>
+  Les cles etrangeres ne sont pas listees en attributs :
+  elles sont portees par les associations.
+  <b>created_at</b> et <b>updated_at</b> existent sur toutes les tables.
+  <b>organization_id</b> existe sur <b>toute</b> table metier : c'est le pivot
+  du cloisonnement multi-entreprises, non represente ici pour
+  ne pas relier Organization a l'ensemble du schema.
+end note
+
+note bottom of AuditLog
+  <b>Aucune cle etrangere, volontairement.</b>
+  Une trace doit survivre a la suppression de l'entite
+  qu'elle decrit. L'API n'expose ni UPDATE ni DELETE.
+end note
+
+note right of AIRecommendation
+  <b>1..1</b> : creer une opportunite declenche
+  la qualification. Il n'existe pas
+  d'opportunite non qualifiee.
+end note
+
+legend bottom
+  |= Couleur |= Domaine |
+  | <back:#0F5E44>       </back> | Organisation et droits (M1) |
+  | <back:#157F5C>       </back> | Diagnostic et opportunites (M2 a M7) |
+  | <back:#1C6B7D>       </back> | Referentiel AS-IS et valeur (M6, M10) |
+  | <back:#A66A16>       </back> | Cycle de vie des projets (M9) |
+  | <back:#5E6F67>       </back> | Gouvernance documentaire (M8, M12) |
+  <b>*--</b> composition   <b>o--</b> agregation   <b>--</b> association
+endlegend
+
+@enduml

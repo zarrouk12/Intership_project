@@ -1,0 +1,299 @@
+% =====================================================================
+%  Chapitre 5 — Tests et validation
+% =====================================================================
+\chapter{Tests et validation}
+\label{chap:tests}
+
+\section{Stratégie de validation}
+
+La validation s'appuie sur trois niveaux, choisis en fonction de ce qu'il s'agit de
+prouver.
+
+\textbf{Les services métier se testent sans serveur.} Les formules de readiness, de
+qualification, de priorisation et de valorisation sont des fonctions sans effet de bord.
+Elles se vérifient par comparaison de valeurs exactes, sans base de données ni requête
+HTTP.
+
+\textbf{Les règles d'autorisation se testent par l'API.} Un contrôle d'accès ne se
+prouve pas en lisant le code de l'interface. Les tests d'autorisation construisent un
+jeton pour un rôle donné, appellent l'endpoint directement et vérifient le code de
+retour. C'est la seule manière de garantir qu'un utilisateur qui contourne l'interface
+se heurte bien au serveur.
+
+\textbf{Les parcours d'écran se vérifient dans un navigateur réel.} Les enchaînements
+d'interface — connexion selon le rôle, ouverture des panneaux latéraux, recalcul de la
+priorisation, export CSV — ont été exécutés dans un navigateur automatisé, avec capture
+à chaque étape.
+
+\section{Composition de la suite automatisée}
+
+La suite compte \textbf{112~tests} répartis en sept fichiers.
+
+\begin{table}[H]
+\centering
+\caption{Répartition de la suite de tests}
+\label{tab:repartition-tests}
+\small
+\begin{tabular}{@{}L{5.2cm} C{1.6cm} L{7.2cm}@{}}
+\toprule
+\textbf{Fichier} & \textbf{Tests} & \textbf{Objet} \\
+\midrule
+\code{test\_permissions.py}        & 40 & Comportement de chacun des 11 rôles \\
+\code{test\_login.py}              & 19 & Authentification et aide de développement \\
+\code{test\_opportunities.py}      & 15 & Cycle de vie, qualification, priorisation \\
+\code{test\_tenant\_isolation.py}  & 13 & Étanchéité entre organisations \\
+\code{test\_diagnostic.py}         & 11 & Sémantique du readiness \\
+\code{test\_scope.py}              & 10 & Bornage par département \\
+\code{test\_endpoint\_protection.py}&  4 & Garde-fous structurels sur l'API \\
+\midrule
+\textbf{Total}                     & \textbf{112} & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Résultats}
+
+\begin{table}[H]
+\centering
+\caption{Résultat de l'exécution de la suite}
+\label{tab:resultats-tests}
+\small
+\begin{tabular}{@{}L{5.6cm} L{5.4cm} C{2.8cm}@{}}
+\toprule
+\textbf{Vérification} & \textbf{Objectif} & \textbf{Résultat} \\
+\midrule
+Suite backend complète & 112 tests & \fait \ 112 réussis \\
+Durée d'exécution & Boucle de retour courte & 12,15 s \\
+Typage du frontend & \code{tsc --noEmit} sans erreur & \fait \ aucune erreur \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Détail des vérifications}
+
+\subsection{Sémantique du readiness}
+
+\begin{longtable}{@{}L{7.4cm} L{5.2cm} C{1.5cm}@{}}
+\caption{Tests du calcul de readiness}
+\label{tab:tests-readiness}\\
+\toprule
+\textbf{Test} & \textbf{Ce qu'il garantit} & \textbf{Résultat} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Test} & \textbf{Ce qu'il garantit} & \textbf{Résultat} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Le taux de complétion est calculé, non saisi
+& Aucune valeur de complétion ne peut être écrite depuis l'API & OK \\
+Une dimension non instruite ne compte pas comme un zéro
+& Le score n'est pas mécaniquement dégradé par une absence de réponse & OK \\
+Les moyennes d'axe ignorent les dimensions non instruites
+& Les deux moyennes restent comparables entre campagnes & OK \\
+Instruire une dimension fait progresser la complétion
+& Le lien réponse $\rightarrow$ complétion est effectif & OK \\
+Instruire une dimension modifie le score
+& Le score est bien recalculé, non mis en cache & OK \\
+Une dimension critique sous le seuil devient bloquante
+& La règle bloquante / vigilance est appliquée & OK \\
+Répondre au diagnostic exige la permission
+& L'écriture est refusée sans \code{diagnostic.answer} & OK \\
+La campagne d'un autre tenant est introuvable
+& Réponse 404, pas 403 & OK \\
+\end{longtable}
+
+\subsection{Autorisation par rôle}
+
+Quarante tests vérifient que chaque rôle fait ce qu'il doit faire \emph{et} échoue sur
+ce qu'il ne doit pas faire. La seconde moitié est la plus importante : elle constitue la
+preuve que les permissions sont réellement discriminantes.
+
+\begin{longtable}{@{}L{7.4cm} L{5.2cm} C{1.5cm}@{}}
+\caption{Extraits des tests d'autorisation}
+\label{tab:tests-permissions}\\
+\toprule
+\textbf{Test} & \textbf{Ce qu'il garantit} & \textbf{Résultat} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Test} & \textbf{Ce qu'il garantit} & \textbf{Résultat} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Le catalogue ne contient aucun code inconnu
+& Aucune permission orpheline dans la base & OK \\
+Chaque modèle de rôle ne référence que des permissions existantes
+& Pas de rôle pointant vers une permission supprimée & OK \\
+Un administrateur d'entreprise ne peut pas s'octroyer le rôle de plateforme
+& La frontière entre tenants n'est pas franchissable & OK \\
+\ldots{} ni créer un rôle portant une permission de plateforme
+& L'élévation de privilège par rôle personnalisé est bloquée & OK \\
+Un rôle système n'est pas modifiable par un administrateur d'entreprise
+& Les rôles livrés restent cohérents & OK \\
+La Direction ne crée pas d'utilisateur
+& Consulter et arbitrer n'est pas administrer & OK \\
+Finance ne modifie pas la recommandation, ne pilote pas les projets
+& Séparation des responsabilités & OK \\
+L'AI Lead requalifie une opportunité, n'administre pas les comptes
+& \code{recommendation.override} est exclusive à ce rôle & OK \\
+Le Data Office ne gère pas le référentiel applicatif
+& Data et architecture sont deux périmètres distincts & OK \\
+Le PMO ne valide pas les bénéfices financiers
+& La validation financière reste chez Finance et la Direction & OK \\
+L'auditeur ne peut rien écrire, modifier ni supprimer
+& Lecture seule effective sur tous les modules & OK \\
+Le contributeur ne voit ni le portefeuille consolidé ni les données financières
+& Le profil le plus restreint l'est réellement & OK \\
+\end{longtable}
+
+\subsection{Périmètre et étanchéité}
+
+Dix tests couvrent le bornage par département et treize l'étanchéité entre
+organisations. Ces derniers construisent une seconde organisation complète, avec ses
+propres utilisateurs et rôles, et vérifient qu'aucune lecture, écriture, suppression,
+affectation de département, attribution de rôle ni entrée d'audit ne traverse la
+frontière. Le test final vérifie que toutes les listes du second locataire sont vides
+des données du premier.
+
+Un point mérite d'être explicité : un utilisateur d'une autre organisation qui appelle
+une ressource existante reçoit \textbf{404}, non 403. Répondre 403 confirmerait
+l'existence de la ressource, ce qui est déjà une fuite d'information. En revanche une
+écriture hors périmètre \emph{à l'intérieur} de sa propre organisation reçoit bien 403,
+puisque l'utilisateur voit l'objet mais n'a pas le droit d'agir dessus.
+
+\subsection{Garde-fous structurels}
+
+Quatre tests ne vérifient pas un comportement mais une propriété du code lui-même. Ils
+parcourent la table de routage de l'application et contrôlent que :
+
+\begin{itemize}
+  \item aucun endpoint n'est exposé sans contrôle, à l'exception d'une liste explicite
+    de routes publiques, chacune assortie d'un commentaire justifiant son ouverture ;
+  \item aucune dépendance d'autorisation n'a été silencieusement transformée en
+    paramètre de requête ou en corps de requête ;
+  \item toutes les routes métier vivent sous le préfixe versionné.
+\end{itemize}
+
+Le deuxième de ces tests a été ajouté après un incident réel. Un import manquant avait
+transformé une annotation de périmètre en paramètre de requête : FastAPI répondait 422
+avec un message obscur, et surtout le contrôle de périmètre n'était plus appliqué. Le
+test rend cette classe d'erreur impossible à réintroduire sans être détectée.
+
+\section{Vérification des interfaces}
+
+Les parcours suivants ont été exécutés dans un navigateur automatisé, avec capture à
+chaque étape.
+
+\begin{table}[H]
+\centering
+\caption{Parcours d'interface vérifiés}
+\label{tab:tests-ui}
+\small
+\begin{tabular}{@{}L{5.6cm} L{6.4cm} C{1.8cm}@{}}
+\toprule
+\textbf{Parcours} & \textbf{Attendu} & \textbf{Résultat} \\
+\midrule
+Connexion par rôle
+& Chaque rôle atterrit sur son écran d'accueil pertinent & OK \\
+Navigation latérale
+& Le menu ne contient que les écrans accessibles & OK \\
+Panneau de diagnostic
+& La saisie recalcule score, moyennes et complétion & OK \\
+Recalcul de la priorisation
+& Les curseurs modifient réellement le classement & OK \\
+Création d'opportunité
+& La qualification est déclenchée à l'enregistrement & OK \\
+Export CSV du diagnostic
+& Fichier téléchargé, accents corrects, résumé inclus & OK \\
+Affichage mobile
+& Aucun débordement horizontal jusqu'à 390~px & OK \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Jeu de démonstration}
+
+Les tests s'appuient sur des données créées à la volée ; la démonstration s'appuie sur
+un jeu ensemencé, calibré pour être crédible et cohérent avec les maquettes.
+
+\begin{table}[H]
+\centering
+\caption{Contenu du jeu de démonstration}
+\label{tab:seed}
+\small
+\begin{tabular}{@{}L{6cm} C{2.4cm} L{5.4cm}@{}}
+\toprule
+\textbf{Élément} & \textbf{Volume} & \textbf{Remarque} \\
+\midrule
+Organisation & 1 & Laboratoire pharmaceutique \\
+Sites & 4 & Tunis, Lyon, Casablanca, Paris \\
+Départements & 8 & Du Commercial aux Affaires réglementaires \\
+Utilisateurs & 13 & Au moins un par rôle fonctionnel \\
+Réponses de diagnostic & 16 & Deux axes, avec preuves et confiances \\
+Opportunités & 18 & Toutes qualifiées et scorées \\
+Projets & 13 & Répartis sur les cinq phases \\
+Entrées d'audit & 440 au seed & Volume qui croît ensuite à chaque écriture \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Les valeurs calculées à partir de ce jeu sont stables et reproductibles : readiness
+global de 62,0 sur 100, moyennes d'axe de 2,81 et 3,12 sur~5, deux dimensions bloquantes
+— gouvernance des données et infrastructure IA —, quatre premières priorités à 87, 81,
+74 et 69~points, ROI de portefeuille de 183,9~\% et délai de retour moyen de 11~mois.
+
+Ces valeurs ne sont écrites nulle part : elles résultent des formules appliquées aux
+données ensemencées. C'est la raison pour laquelle le jeu a été calibré avec soin — une
+démonstration dont les chiffres ne tiennent pas ensemble se voit immédiatement.
+
+\begin{remarque}[Sur les comptes de démonstration]
+Le mot de passe commun aux comptes du seed n'est pas écrit dans le code de l'interface.
+Il est lu d'une variable d'environnement et n'est publié que par un endpoint d'aide qui
+répond 404 dès que l'environnement n'est pas déclaré comme développement. Ces comptes
+restent strictement destinés au développement et à la démonstration.
+\end{remarque}
+
+\section{Difficultés rencontrées}
+
+Les difficultés ci-dessous ont été effectivement rencontrées pendant le développement et
+sont documentées ici parce qu'elles ont conduit à des corrections vérifiables dans le
+code.
+
+\textbf{Une dimension ajoutée au référentiel dégradait tous les scores.} Les dimensions
+non encore instruites étaient comptées comme des zéros. Ajouter une question au
+questionnaire faisait donc chuter le readiness de toutes les campagnes existantes,
+alors que rien n'avait changé sur le terrain. La notion de dimension instruite, adossée
+à une confiance strictement positive, a résolu le problème : une dimension non mesurée
+sort du calcul et pèse seulement sur le taux de complétion.
+
+\textbf{Une gate franchie faisait reculer un projet.} Valider une gate déjà franchie
+ramenait le projet à une phase antérieure. Un garde-fou répond désormais 409 avec un
+message explicite selon que la gate est déjà franchie ou pas encore atteinte.
+
+\textbf{Le recalcul des synergies écrasait les valeurs ensemencées.} La priorisation
+recalculait automatiquement les synergies, ce qui modifiait les scores à chaque passage
+et rendait la démonstration instable. Le recalcul est devenu explicite plutôt
+qu'automatique.
+
+\textbf{Le délai de retour ne concordait pas avec les hypothèses.} La formule initiale
+rapportait le coût total de possession au gain mensuel, ce qui faisait porter au délai
+de retour trois années de coûts récurrents non encore engagés. Elle a été corrigée pour
+rapporter le seul investissement initial au gain annuel net d'exploitation.
+
+\textbf{Un contrôle de périmètre avait disparu silencieusement.} Un import manquant
+transformait une annotation en paramètre de requête ; FastAPI répondait 422 et le
+contrôle n'était plus exécuté. Au-delà de la correction, un test structurel garantit
+désormais qu'aucune dépendance ne peut subir ce sort sans être détectée.
+
+\textbf{Un test passait seul et échouait en suite.} Un test d'interface laissait des
+pondérations modifiées en base, ce qui faussait le test de priorisation exécuté ensuite.
+Le montage de test rétablit désormais les pondérations par défaut avant et après.
+
+\textbf{Le développement sous Windows a posé ses propres questions.} La documentation
+d'installation décrivait l'activation d'environnement virtuel en syntaxe POSIX, ce qui
+produisait une erreur sous PowerShell. Les deux fichiers de documentation donnent
+désormais la commande adaptée à chaque terminal, avec une note sur la politique
+d'exécution.

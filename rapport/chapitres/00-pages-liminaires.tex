@@ -1,0 +1,183 @@
+% =====================================================================
+%  Page de garde, remerciements, résumé, tables
+% =====================================================================
+
+\begin{titlepage}
+\begin{tikzpicture}[remember picture, overlay]
+  % Bandeau supérieur
+  \fill[medicaDark] (current page.north west) rectangle
+    ([yshift=-4.2cm]current page.north east);
+  % Liseré d'accent
+  \fill[medicaGreen] ([yshift=-4.2cm]current page.north west) rectangle
+    ([yshift=-4.35cm]current page.north east);
+  % Bandeau inférieur
+  \fill[medicaDark] ([yshift=1.5cm]current page.south west) rectangle
+    (current page.south east);
+
+  % Marque
+  \node[anchor=north west, text=white] at ([shift={(2.6cm,-1.5cm)}]current page.north west)
+    {\fontsize{26}{28}\selectfont\bfseries Medicacom};
+  \node[anchor=north west, text=medicaSoft] at ([shift={(2.6cm,-2.35cm)}]current page.north west)
+    {\small\sffamily AOI TRANSFORMATION};
+
+  % Croix pharmaceutique stylisée
+  \begin{scope}[shift={([shift={(-3.4cm,-2.1cm)}]current page.north east)}]
+    \fill[medicaGreen, rounded corners=6pt] (-0.9,-0.9) rectangle (0.9,0.9);
+    \fill[white] (-0.18,-0.6) rectangle (0.18,0.6);
+    \fill[white] (-0.6,-0.18) rectangle (0.6,0.18);
+  \end{scope}
+\end{tikzpicture}
+
+\vspace*{5.2cm}
+
+\begin{center}
+  {\large \varUniversite}\\[3pt]
+  {\normalsize \varEcole}\\[3pt]
+  {\small \textcolor{medicaMuted}{\varDepartement}}
+
+  \vspace{1.6cm}
+
+  {\small\textcolor{medicaMuted}{\textsc{Rapport de projet}}}\\[2pt]
+  {\small\textcolor{medicaMuted}{\varDiplome{} --- \varFormation}}
+
+  \vspace{1.3cm}
+
+  \rule{0.72\textwidth}{0.8pt}
+
+  \vspace{0.9cm}
+
+  {\LARGE\bfseries\color{medicaDeep} \varTitre\par}
+
+  \vspace{0.7cm}
+
+  {\large\itshape\color{medicaMuted} \varSousTitre\par}
+
+  \vspace{0.9cm}
+
+  \rule{0.72\textwidth}{0.8pt}
+
+  \vspace{2.1cm}
+
+  \begin{minipage}{0.44\textwidth}
+    \raggedright
+    \textbf{Réalisé par}\\[4pt]
+    \varAuteur
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.44\textwidth}
+    \raggedleft
+    \textbf{Encadré par}\\[4pt]
+    \varEncadrantAcademique\\
+    \varEncadrantEntreprise
+  \end{minipage}
+
+  \vspace{1.5cm}
+
+  \textbf{Entreprise d'accueil :} \varEntreprise
+
+  \vfill
+
+  {\color{white}\textbf{Année universitaire \varAnnee}}
+  \vspace{0.35cm}
+\end{center}
+\end{titlepage}
+
+% ---------------------------------------------------------------- remerciements
+\chapter*{Remerciements}
+\addcontentsline{toc}{chapter}{Remerciements}
+\markboth{Remerciements}{}
+
+Je tiens à remercier \varEncadrantAcademique, dont l'encadrement académique a
+structuré la conduite de ce travail, ainsi que \varEncadrantEntreprise, pour
+l'accompagnement quotidien au sein de \varEntreprise{} et la confiance accordée sur un
+sujet aussi transverse que le pilotage de l'adoption de l'intelligence artificielle.
+
+Mes remerciements vont également aux équipes métier qui ont accepté de décrire leurs
+processus, leurs irritants et leurs indicateurs. Sans ces échanges, le référentiel de
+diagnostic et le questionnaire de qualification n'auraient été qu'un exercice
+théorique.
+
+Je remercie enfin les membres du jury pour le temps consacré à l'évaluation de ce
+travail.
+
+% ---------------------------------------------------------------------- résumé
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+\markboth{Résumé}{}
+
+Les laboratoires pharmaceutiques accumulent des idées d'intelligence artificielle sans
+disposer d'un cadre commun pour décider lesquelles financer. Les besoins remontent de
+départements cloisonnés, les données ne sont pas toujours exploitables, la conformité
+réglementaire pèse sur chaque décision, et la valeur créée reste rarement mesurée après
+la mise en production.
+
+Ce projet répond à ce problème par une plateforme SaaS multi-entreprises,
+\appname, qui couvre l'ensemble du parcours : diagnostic de maturité inspiré de
+la démarche TOGAF, qualification de la solution la plus adaptée, évaluation du
+readiness, priorisation du portefeuille, génération de la fiche projet, suivi du cycle
+de vie et mesure du retour sur investissement.
+
+La plateforme repose sur une API REST écrite en Python avec FastAPI et SQLAlchemy~2,
+une base PostgreSQL et une interface React en TypeScript. Le contrôle d'accès associe
+41~permissions granulaires, 11~rôles fonctionnels et cinq niveaux de périmètre, avec
+une isolation stricte entre organisations clientes. Chaque décision produite par le
+système est explicable : le score de priorité renvoie la contribution de chacun de ses
+six critères, et la recommandation de solution expose les règles satisfaites, les
+alternatives écartées et les garde-fous à mettre en place.
+
+Un point mérite d'être énoncé sans détour : la plateforme ne contient aujourd'hui
+\emph{aucun modèle d'apprentissage automatique}. Son intelligence est celle d'un moteur
+de règles pondérées, déterministe et auditable. Ce choix est assumé et documenté au
+chapitre~\ref{chap:realisation}; l'intégration d'un modèle de langage figure parmi les
+perspectives, non parmi les fonctionnalités livrées.
+
+\vspace{0.8em}
+\noindent\textbf{Mots-clés} — adoption de l'IA, industrie pharmaceutique, TOGAF,
+readiness, portefeuille de projets, moteur de règles, gouvernance, multi-tenant,
+FastAPI, React, PostgreSQL.
+
+% -------------------------------------------------------------------- abstract
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+\markboth{Abstract}{}
+
+Pharmaceutical companies accumulate artificial intelligence ideas without a shared
+framework for deciding which ones deserve funding. Needs come from siloed departments,
+data is not always usable, regulatory compliance weighs on every decision, and the
+value actually delivered is rarely measured once a system reaches production.
+
+This project addresses that problem with \appname, a multi-tenant SaaS platform
+covering the full journey: a TOGAF-inspired maturity assessment, qualification of the
+most suitable solution type, readiness scoring, portfolio prioritisation, project
+charter generation, lifecycle tracking and return-on-investment measurement.
+
+The platform is built on a REST API written in Python with FastAPI and SQLAlchemy~2, a
+PostgreSQL database and a React frontend in TypeScript. Access control combines
+41~granular permissions, 11~functional roles and five scope levels, with strict
+isolation between client organisations. Every decision the system produces is
+explainable: the priority score returns the contribution of each of its six criteria,
+and the solution recommendation exposes the rules that fired, the alternatives that
+were ruled out and the guardrails to put in place.
+
+One point deserves to be stated plainly: the platform currently contains
+\emph{no machine learning model}. Its intelligence is that of a weighted, deterministic
+and auditable rules engine. This is a deliberate choice, documented in
+Chapter~\ref{chap:realisation}; integrating a large language model belongs to the
+outlook, not to the delivered features.
+
+\vspace{0.8em}
+\noindent\textbf{Keywords} — AI adoption, pharmaceutical industry, TOGAF, readiness,
+project portfolio, rules engine, governance, multi-tenancy, FastAPI, React, PostgreSQL.
+
+% ----------------------------------------------------------------------- tables
+\cleardoublepage
+\renewcommand{\contentsname}{Table des matières}
+\tableofcontents
+
+\cleardoublepage
+\listoffigures
+\addcontentsline{toc}{chapter}{Table des figures}
+
+\cleardoublepage
+\listoftables
+\addcontentsline{toc}{chapter}{Liste des tableaux}

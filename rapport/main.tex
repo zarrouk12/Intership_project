@@ -1,0 +1,61 @@
+% =====================================================================
+%  RAPPORT DE PROJET — Medicacom AOI Transformation
+%
+%  Compilation :  latexmk -pdf main.tex
+%             ou :  pdflatex main.tex  (deux fois, pour la table des matières)
+%
+%  Les informations personnelles se règlent ci-dessous, en un seul endroit.
+% =====================================================================
+\documentclass[12pt,a4paper,openany]{report}
+
+\input{preambule}
+
+% ---------------------------------------------------------------------
+%  À COMPLÉTER — variables de la page de garde
+% ---------------------------------------------------------------------
+\newcommand{\varUniversite}{[À COMPLÉTER : nom de l'université]}
+\newcommand{\varEcole}{[À COMPLÉTER : nom de l'école ou de la faculté]}
+\newcommand{\varDepartement}{[À COMPLÉTER : département]}
+\newcommand{\varFormation}{[À COMPLÉTER : intitulé de la formation]}
+\newcommand{\varDiplome}{[À COMPLÉTER : diplôme préparé]}
+
+\newcommand{\varTitre}{Conception et développement de Medicacom AOI Transformation}
+\newcommand{\varSousTitre}{Plateforme SaaS de pilotage de l'adoption de
+  l'Intelligence Artificielle dans l'industrie pharmaceutique}
+
+\newcommand{\varAuteur}{[À COMPLÉTER : prénom et nom]}
+\newcommand{\varEncadrantAcademique}{[À COMPLÉTER : encadrant académique]}
+\newcommand{\varEncadrantEntreprise}{[À COMPLÉTER : encadrant en entreprise]}
+\newcommand{\varEntreprise}{Medicacom}
+\newcommand{\varAnnee}{2026 / 2027}
+
+\begin{document}
+
+% =====================================================================
+%  Pages liminaires
+% =====================================================================
+\pagenumbering{roman}
+\input{chapitres/00-pages-liminaires}
+
+% =====================================================================
+%  Corps du rapport
+% =====================================================================
+\cleardoublepage
+\pagenumbering{arabic}
+
+\input{chapitres/01-introduction}
+\input{chapitres/02-analyse}
+\input{chapitres/03-conception}
+\input{chapitres/04-realisation}
+\input{chapitres/05-interfaces}
+\input{chapitres/06-tests}
+\input{chapitres/07-conclusion}
+
+% =====================================================================
+%  Annexes
+% =====================================================================
+\appendix
+\input{annexes/a-soutenance}
+\input{annexes/b-references}
+
+\end{document}

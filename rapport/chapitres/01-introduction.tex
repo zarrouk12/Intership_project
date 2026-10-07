@@ -1,0 +1,127 @@
+% =====================================================================
+%  Introduction générale
+% =====================================================================
+\chapter*{Introduction générale}
+\addcontentsline{toc}{chapter}{Introduction générale}
+\markboth{Introduction générale}{}
+\label{chap:introduction}
+
+\section*{Un secteur sous double contrainte}
+
+L'industrie pharmaceutique se transforme sous deux pressions simultanées. D'un côté,
+la pression économique : les coûts de développement d'un médicament augmentent, les
+marges se resserrent, et l'optimisation des opérations devient un levier de
+compétitivité. De l'autre, la pression réglementaire : chaque processus touchant au
+produit, au lot ou au dossier patient relève d'un cadre GxP qui impose traçabilité,
+validation informatique et justification des décisions.
+
+L'intelligence artificielle est présentée comme une réponse à la première pression.
+Elle se heurte pourtant frontalement à la seconde. Un modèle dont on ne peut pas
+expliquer la sortie est difficilement défendable devant un inspecteur. Une
+automatisation qui décide seule sur un périmètre GxP est encore plus difficile à
+justifier.
+
+\section*{Le problème observé}
+
+Dans les organisations pharmaceutiques, l'adoption de l'IA échoue rarement par manque
+d'idées. Elle échoue plus souvent en amont du code, pour des raisons qui n'ont rien de
+technique :
+
+\begin{itemize}
+  \item \textbf{les besoins remontent de départements cloisonnés.} Le Commercial, la
+    Production, la Qualité et les Affaires réglementaires expriment leurs irritants
+    chacun de leur côté, souvent dans des formats différents, parfois sur le même
+    processus sans le savoir ;
+  \item \textbf{la qualification technique arrive trop tard.} On décide de « faire de
+    l'IA » avant de vérifier si les données existent, si elles sont exploitables et si
+    une vérité terrain est disponible. Le projet s'arrête alors au premier atelier
+    technique ;
+  \item \textbf{les arbitrages manquent de critères partagés.} Sans grille commune,
+    la priorisation se joue à la conviction du sponsor le plus influent plutôt qu'à
+    l'impact attendu ;
+  \item \textbf{la valeur n'est pas mesurée.} Le business case sert à obtenir le budget,
+    puis disparaît. Personne ne compare la valeur promise à la valeur réalisée ;
+  \item \textbf{la traçabilité fait défaut.} Six mois plus tard, plus personne ne sait
+    pourquoi telle solution a été retenue plutôt qu'une autre.
+\end{itemize}
+
+Ces cinq difficultés partagent une même cause : l'absence d'un référentiel unique où
+le diagnostic, la qualification, l'arbitrage et le suivi vivent ensemble, avec leurs
+justifications.
+
+\section*{La réponse apportée}
+
+\appname{} est une plateforme SaaS multi-entreprises qui couvre le parcours complet,
+de l'état des lieux à la valeur captée. Elle s'organise autour de sept temps
+(figure~\ref{fig:parcours}).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=0.42cm and 0.5cm]
+  \node[blocvert] (diag) {\textbf{Diagnostic}\\\scriptsize AS-IS, maturité};
+  \node[blocvert, right=of diag] (qual) {\textbf{Qualification}\\\scriptsize type de solution};
+  \node[blocvert, right=of qual] (read) {\textbf{Readiness}\\\scriptsize score sur 100};
+  \node[blocvert, below=0.9cm of read] (prio) {\textbf{Priorisation}\\\scriptsize score, rang, vague};
+  \node[blocvert, left=of prio] (fiche) {\textbf{Fiche projet}\\\scriptsize versions, décision};
+  \node[blocvert, left=of fiche] (cycle) {\textbf{Cycle de vie}\\\scriptsize phases, gates};
+  \node[blocsombre, below=0.9cm of fiche] (roi) {\textbf{Valeur \& ROI}\\\scriptsize TCO, gains, payback};
+
+  \draw[flechevert] (diag) -- (qual);
+  \draw[flechevert] (qual) -- (read);
+  \draw[flechevert] (read) -- (prio);
+  \draw[flechevert] (prio) -- (fiche);
+  \draw[flechevert] (fiche) -- (cycle);
+  \draw[flechevert] (cycle.south) |- (roi.west);
+  \draw[fleche, dashed] (roi.east) -| node[pos=0.25, below, font=\scriptsize, text=medicaMuted]
+    {rétroaction : la valeur mesurée corrige les hypothèses} (diag.south);
+\end{tikzpicture}
+\caption{Le parcours couvert par la plateforme, du diagnostic à la mesure de la valeur}
+\label{fig:parcours}
+\end{figure}
+
+Chacun de ces temps produit une décision, et chaque décision reste rattachée à ce qui
+l'a motivée. Le readiness renvoie la note de chaque dimension avec sa preuve. La
+recommandation de solution expose les règles satisfaites et les alternatives écartées.
+Le score de priorité détaille la contribution de ses six critères. Le business case
+publie ses coûts et ses gains ligne à ligne.
+
+\section*{Ce que ce rapport établit}
+
+Ce document décrit ce qui a été \emph{réellement} développé. Lorsque l'implémentation
+s'écarte du cahier des charges initial, l'écart est signalé explicitement dans un
+encadré dédié, avec ce qui était demandé, ce qui a été réalisé et ce qui reste à faire.
+
+Un point mérite d'être posé dès l'introduction, car il conditionne la lecture de tout
+le rapport. Le nom du produit contient « IA », et la plateforme recommande des types
+de solutions d'intelligence artificielle. Elle ne \emph{contient} pourtant aucun modèle
+d'apprentissage automatique : ni modèle entraîné localement, ni appel à un fournisseur
+externe. Sa capacité de recommandation repose sur un moteur de règles pondérées,
+déterministe et explicable. Ce choix est argumenté à la
+section~\ref{sec:pas-dia}~; le confondre avec de l'apprentissage automatique serait une
+erreur d'analyse.
+
+\section*{Organisation du document}
+
+Le rapport suit la progression du projet.
+
+\begin{itemize}
+  \item Le \textbf{chapitre~\ref{chap:analyse}} établit le contexte, la problématique,
+    les objectifs, le cahier des charges et l'état réel de chacun des douze modules
+    fonctionnels.
+  \item Le \textbf{chapitre~\ref{chap:conception}} présente les acteurs, le modèle de
+    droits, les cas d'utilisation, le modèle de données et l'architecture technique.
+  \item Le \textbf{chapitre~\ref{chap:realisation}} détaille les technologies employées,
+    les algorithmes de readiness, de priorisation et de valorisation, le moteur de
+    qualification et le dispositif de sécurité.
+  \item Le \textbf{chapitre~\ref{chap:interfaces}} parcourt les quatorze écrans de
+    l'application. Chaque écran est accompagné d'une proposition de présentation orale
+    directement réutilisable en soutenance.
+  \item Le \textbf{chapitre~\ref{chap:tests}} rend compte de la stratégie de validation
+    et des résultats obtenus.
+  \item Le \textbf{chapitre~\ref{chap:conclusion}} dresse le bilan, énonce les limites
+    de la version actuelle et ouvre sur les évolutions envisageables.
+\end{itemize}
+
+L'annexe~\ref{ann:soutenance} propose un guide de démonstration minuté et une série de
+questions susceptibles d'être posées par le jury, avec des réponses appuyées sur le
+code réel.

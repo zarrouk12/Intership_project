@@ -1,0 +1,393 @@
+% =====================================================================
+%  Annexe A — Guide de soutenance
+% =====================================================================
+\chapter{Guide de soutenance}
+\label{ann:soutenance}
+
+Cette annexe rassemble ce qui est nécessaire le jour de la présentation : les comptes à
+utiliser, un déroulé de démonstration minuté, et un jeu de questions probables avec des
+réponses appuyées sur le code réel.
+
+% =====================================================================
+\section{Préparation}
+
+\subsection{Lancement de l'environnement}
+
+Trois terminaux, dans cet ordre.
+
+\begin{enumerate}
+  \item \textbf{Base de données.} Vérifier que PostgreSQL est démarré et que la base
+    \code{medicacom} existe.
+  \item \textbf{Backend.} Depuis \code{backend/}, activer l'environnement virtuel puis
+    lancer le serveur sur le port~8000. Sous PowerShell, l'activation se fait avec
+    \code{.\textbackslash.venv\textbackslash Scripts\textbackslash Activate.ps1} ; sous
+    Git~Bash, avec \code{source .venv/Scripts/activate}. La confusion entre les deux
+    syntaxes est la cause la plus fréquente de l'erreur
+    « \code{uvicorn} n'est pas reconnu ».
+  \item \textbf{Frontend.} Depuis \code{frontend/}, \code{npm run dev}. L'interface
+    répond sur le port~5173.
+\end{enumerate}
+
+Ouvrir un onglet supplémentaire sur \code{http://localhost:8000/docs}. La documentation
+interactive de l'API est utile si le jury demande une preuve côté serveur.
+
+\subsection{Comptes de démonstration}
+
+Tous les comptes ci-dessous partagent le mot de passe défini par la variable
+\code{DEMO\_PASSWORD}. Ils sont réservés au développement et à la démonstration.
+
+\begin{table}[H]
+\centering
+\caption{Comptes du jeu de démonstration}
+\label{tab:comptes}
+\small
+\begin{tabular}{@{}L{5.3cm} L{3.4cm} L{5.1cm}@{}}
+\toprule
+\textbf{Adresse} & \textbf{Rôle} & \textbf{Écran d'accueil} \\
+\midrule
+admin@medicacom.com            & Admin. Medicacom & Administration \\
+admin.entreprise@medicacom.com & Admin. entreprise & Administration \\
+marwen.b@medicacom.com         & Direction Générale & Tableau de bord Direction \\
+l.trabelsi@medicacom.com       & Resp. département & Tableau de bord Département \\
+h.gharbi@medicacom.com         & Resp. département & Tableau de bord Département \\
+c.lambert@medicacom.com        & Resp. département & Tableau de bord Département \\
+a.rousseau@medicacom.com       & Contributeur métier & Opportunités \\
+k.zouari@medicacom.com         & DSI / Architecte & Architecture \& données \\
+n.hamdi@medicacom.com          & Data Office & Architecture \& données \\
+y.benali@medicacom.com         & AI Lead & Portefeuille \\
+m.dupuis@medicacom.com         & Finance & Valeur \& ROI \\
+f.moreau@medicacom.com         & PMO & Portefeuille \\
+audit@medicacom.com            & Auditeur & Portefeuille \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =====================================================================
+\section{Déroulé de démonstration (10 à 15 minutes)}
+
+\subsection*{Séquence 1 — Connexion et parcours (1 min 30)}
+
+\textbf{Où :} page de connexion.\quad\textbf{Quoi :} se connecter avec
+\code{marwen.b@medicacom.com}.
+
+\begin{oral}
+Medicacom AOI Transformation répond à un problème simple à énoncer et difficile à
+résoudre : dans un laboratoire pharmaceutique, les idées d'IA ne manquent pas, mais rien
+ne permet de décider lesquelles financer. La plateforme couvre le parcours complet, du
+diagnostic de maturité à la mesure de la valeur réellement captée. Je me connecte en
+Direction Générale.
+\end{oral}
+
+\subsection*{Séquence 2 — Tableau de bord Direction (1 min 30)}
+
+\textbf{Où :} écran d'accueil.\quad\textbf{Quoi :} montrer les quatre indicateurs, puis
+la matrice Impact~$\times$~Faisabilité.
+
+\begin{oral}
+Ces quatre chiffres ne sont pas saisis. Ils sont agrégés à la demande depuis les
+projets, les coûts et les bénéfices. Le ROI de portefeuille rapporte les gains cumulés
+sur trois ans au coût total de possession. Dans la matrice, chaque bulle est une
+opportunité ; sa taille est le bénéfice annuel attendu, et le quadrant supérieur droit
+est ce que l'organisation devrait lancer en premier.
+\end{oral}
+
+\subsection*{Séquence 3 — Diagnostic et readiness (2 min)}
+
+\textbf{Où :} menu \emph{Diagnostic}.\quad\textbf{Quoi :} montrer la jauge, les deux
+bandeaux d'alerte, puis descendre jusqu'au tableau des preuves.
+
+\begin{oral}
+Le readiness est le point de départ. Chaque dimension est notée de 0 à 5, pondérée par
+son importance et par la confiance que le répondant accorde à sa propre réponse. Cette
+confiance intervient au numérateur et au dénominateur, donc une réponse mal étayée ne
+fausse le score dans aucun sens. Les deux dimensions en ambre sont bloquantes : sous le
+seuil et marquées critiques, elles interdisent un passage en production. Et chaque note
+est adossée à une preuve — c'est ce qui rend le diagnostic auditable.
+\end{oral}
+
+\textbf{Action facultative :} ouvrir « Poursuivre le diagnostic », modifier une note,
+enregistrer, montrer que le score bouge.
+
+\subsection*{Séquence 4 — Opportunité et qualification (2 min 30)}
+
+\textbf{Où :} menu \emph{Opportunités}, puis « Nouvelle opportunité ».\quad
+\textbf{Quoi :} d'abord signaler le bandeau de doublons, puis créer une opportunité.
+
+\begin{oral}
+Le bandeau ambre est un apport du croisement interservices : deux départements ont
+exprimé un besoin très proche sans le savoir, et la plateforme les rapproche sur leurs
+termes partagés. Sans cet écran, les deux projets seraient financés séparément.
+
+Je crée maintenant une opportunité. Ce questionnaire n'est pas décoratif : chaque
+réponse est un fait d'entrée du moteur. Je déclare des données disponibles mais non
+structurées, du texte libre à traiter, pas de génération de contenu. Je valide — et la
+qualification s'exécute immédiatement. Il n'y a pas d'étape séparée : dans cette
+plateforme, il n'existe pas d'opportunité non qualifiée.
+\end{oral}
+
+\subsection*{Séquence 5 — Portefeuille et repriorisation (2 min)}
+
+\textbf{Où :} menu \emph{Portefeuille}, puis « Recalculer la priorisation ».
+
+\begin{oral}
+Le score de chaque ligne combine six critères pondérés, moins une pénalité de risque
+proportionnelle au produit probabilité par impact. Le rang et la vague en découlent.
+
+Si la Direction décide que le contexte impose de privilégier l'impact financier, elle
+pousse ce curseur et relance le calcul. Je le fais : douze opportunités changent de
+rang. Et ce changement de pondération est lui-même tracé dans le journal d'audit, avec
+l'ancienne et la nouvelle grille.
+\end{oral}
+
+\subsection*{Séquence 6 — Fiche projet (2 min 30)}
+
+\textbf{Où :} cliquer sur la première ligne du portefeuille.
+
+\begin{oral}
+C'est le livrable que reçoit un comité d'investissement. Trois choses le distinguent
+d'une présentation classique. D'abord, la recommandation est justifiée : les pastilles
+sont les règles satisfaites, et l'alternative écartée est nommée avec son motif.
+Ensuite, le score dans la colonne de droite est décomposé critère par critère, pénalité
+de risque comprise. Enfin, les garde-fous sont générés automatiquement : sur une
+opportunité en périmètre GxP, la plateforme ajoute la validation informatique, la
+traçabilité ALCOA+ et la revue humaine obligatoire.
+\end{oral}
+
+\subsection*{Séquence 7 — Changement de rôle (2 min)}
+
+\textbf{Où :} se déconnecter, se reconnecter avec \code{l.trabelsi@medicacom.com}.
+
+\begin{oral}
+Même application, même URL d'accueil, écran différent. Le menu latéral a changé aussi :
+il ne contient que les écrans auxquels ce rôle a droit.
+
+Mais l'essentiel n'est pas ce qu'on voit. Masquer un bouton dans React n'est pas un
+contrôle d'accès. Si j'appelais l'API directement pour lire une opportunité d'un autre
+département, je recevrais 404 — et non 403, parce que répondre 403 confirmerait que la
+ressource existe. Quarante tests vérifient ce comportement rôle par rôle, en appelant
+l'API sans passer par l'interface.
+\end{oral}
+
+\subsection*{Séquence 8 — Valeur et audit (1 min 30)}
+
+\textbf{Où :} menus \emph{Valeur \& ROI} puis \emph{Journal d'audit}.
+
+\begin{oral}
+L'écran Valeur ferme la boucle : le business case ne sert plus seulement à obtenir un
+budget, il compare la valeur promise à la valeur mesurée.
+
+Et le journal répond à la question « pourquoi cette décision ? » six mois plus tard.
+Chaque modification laisse son auteur, sa date, l'ancienne et la nouvelle valeur. Point
+important : il n'existe aucun moyen, ni par l'interface ni par l'API, de modifier ou de
+supprimer une entrée. Le journal est en insertion seule, ce qui est une exigence directe
+du contexte pharmaceutique.
+\end{oral}
+
+\subsection*{Conclusion orale (30 s)}
+
+\begin{oral}
+Un dernier point, qui est aussi le plus important. Le produit s'appelle « AOI
+Transformation » et recommande des solutions d'intelligence artificielle. Il n'en
+contient aucune. Le moteur qui produit ces recommandations est un système à base de
+règles pondérées, écrites par un expert, entièrement déterministe. C'est un choix
+assumé : sans historique de décisions, un modèle n'aurait rien à apprendre, et en
+périmètre réglementé une décision non explicable est une décision indéfendable.
+L'intégration d'un modèle de langage figure dans les perspectives du rapport, pas dans
+les fonctionnalités livrées.
+\end{oral}
+
+% =====================================================================
+\section{Questions probables du jury}
+
+\subsection*{Sur l'intelligence artificielle}
+
+\textbf{1. Quel modèle d'IA avez-vous utilisé ?}\\
+Aucun. La plateforme ne contient ni modèle entraîné, ni appel à un fournisseur externe.
+Ce que le nom du produit désigne, c'est le domaine traité — la gouvernance de l'adoption
+de l'IA — pas la technologie employée. Le moteur qui produit les recommandations est un
+système expert à base de 39~règles pondérées réparties sur 8~types de solution.
+
+\textbf{2. Comment pouvez-vous l'affirmer ?}\\
+Ni \code{requirements.txt} ni \code{package.json} ne déclarent de bibliothèque
+d'apprentissage ou de client de fournisseur de modèle. Aucun fichier de modèle entraîné
+n'existe dans le dépôt, aucune clé d'API n'est attendue par la configuration, et le
+backend n'émet aucune requête HTTP sortante. Le seul client HTTP installé sert aux
+tests.
+
+\textbf{3. Pourquoi ne pas avoir intégré un modèle ?}\\
+Pour quatre raisons. Il n'existe pas de données d'entraînement : prédire le bon type de
+solution supposerait des centaines de besoins qualifiés puis validés par leur résultat
+réel, corpus dont aucune organisation ne dispose au démarrage. La décision doit être
+contestable règle par règle en comité. Le contexte GxP pénalise l'opacité. Et le
+déterminisme rend le moteur testable sur des sorties exactes.
+
+\textbf{4. Quelle est la différence entre votre moteur et de l'apprentissage
+automatique ?}\\
+L'origine de la connaissance. Ici, elle est écrite par un humain et lisible dans le
+code ; en apprentissage, elle est inférée statistiquement de données. Il en découle tout
+le reste : pas de jeu d'entraînement, déterminisme, explicabilité native — mais aussi
+l'incapacité à découvrir ce qu'un expert n'a pas prévu.
+
+\textbf{5. Que ferait un modèle de langage s'il était ajouté ?}\\
+Trois choses, toutes en entrée du moteur, jamais à sa place : pré-remplir les quinze
+faits de qualification à partir d'une description libre, rédiger un premier jet de fiche
+projet, et détecter des doublons sémantiques là où la comparaison lexicale échoue. Le
+modèle proposerait des entrées ; les règles continueraient de décider, pour préserver la
+traçabilité.
+
+\subsection*{Sur les algorithmes}
+
+\textbf{6. Comment calculez-vous le readiness ?}\\
+Chaque dimension porte une note sur 5, un poids et une confiance entre 0 et 1. Le score
+est cent fois la somme des notes pondérées par poids et confiance, divisée par la somme
+des maxima pondérés de la même façon. La confiance apparaît aux deux termes, donc une
+réponse mal étayée s'efface au lieu de fausser le résultat.
+
+\textbf{7. Pourquoi les moyennes d'axe n'utilisent-elles pas la confiance ?}\\
+Parce qu'elles décrivent deux choses différentes. Le score global mesure une maturité
+consolidée, pour laquelle la solidité du constat compte. La moyenne d'axe décrit le
+niveau observé, indépendamment de la qualité de l'instruction.
+
+\textbf{8. Que se passe-t-il si une dimension n'a pas été renseignée ?}\\
+Une confiance nulle la marque comme non instruite. Elle sort du calcul du score et des
+moyennes — une dimension non mesurée ne vaut pas zéro — et pèse uniquement sur le taux
+de complétion. Sans ce mécanisme, ajouter une question au référentiel ferait chuter le
+readiness de toutes les campagnes existantes sans qu'aucune réalité n'ait changé.
+
+\textbf{9. Comment le score de priorité est-il construit ?}\\
+Six critères notés sur 100, pondérés, moins une pénalité de risque. Les pondérations par
+défaut sont 0,25 pour l'impact métier, 0,20 pour l'impact financier, 0,20 pour la
+faisabilité, 0,15 pour l'alignement, 0,10 pour le readiness et 0,10 pour les synergies.
+La pénalité vaut le produit probabilité par impact, ramené sur 25, multiplié par un
+plafond de 15~points.
+
+\textbf{10. Que se passe-t-il si l'utilisateur saisit des poids dont la somme n'est pas
+1 ?}\\
+Ils sont renormalisés avant application. C'est un choix d'ergonomie : l'utilisateur
+pousse le critère qui l'intéresse sans avoir à rééquilibrer les cinq autres à la main,
+et les scores restent comparables.
+
+\textbf{11. Pourquoi 15 points de pénalité maximale, et pas 20 ou 10 ?}\\
+C'est un étalonnage, pas une constante théorique. Assez élevé pour qu'une opportunité
+très risquée soit réellement déclassée, assez bas pour qu'un risque maîtrisable
+n'annule pas un impact métier fort. La valeur est isolée dans une constante nommée,
+modifiable en un point.
+
+\textbf{12. Pourquoi le payback n'utilise-t-il pas le TCO ?}\\
+Parce qu'il répond à une question précise : en combien de mois l'investissement initial
+est-il récupéré ? Y intégrer trois années de coûts récurrents non encore engagés
+allongerait artificiellement le délai. Le numérateur est donc le CAPEX seul, le
+dénominateur le gain annuel net des coûts d'exploitation, ramené au mois.
+
+\textbf{13. Qu'est-ce qu'une règle bloquante dans le moteur de qualification ?}\\
+Une condition sans laquelle le type de solution n'a pas de sens — par exemple des
+données d'image pour de la vision par ordinateur. Si elle n'est pas satisfaite, le type
+est disqualifié et son score divisé par quatre. Il reste visible dans les alternatives
+avec le motif de sa disqualification : savoir qu'un type serait pertinent mais qu'il est
+bloqué sur la vérité terrain est plus utile qu'une simple absence.
+
+\subsection*{Sur la sécurité}
+
+\textbf{14. Comment garantissez-vous qu'une organisation ne voit pas les données d'une
+autre ?}\\
+L'identifiant d'organisation est lu dans le jeton signé, jamais dans le corps ou les
+paramètres de la requête. Un utilisateur ne peut donc pas se déclarer membre d'une autre
+organisation sans forger le jeton, ce qui exigerait la clé de signature. Treize tests
+construisent une seconde organisation complète et vérifient qu'aucune lecture, écriture,
+suppression ou affectation ne traverse la frontière.
+
+\textbf{15. Pourquoi 404 et non 403 pour une ressource hors périmètre ?}\\
+Répondre 403 confirmerait que la ressource existe, ce qui est déjà une fuite. En
+revanche, une écriture refusée \emph{à l'intérieur} de sa propre organisation répond
+bien 403 : l'utilisateur voit l'objet, il n'a simplement pas le droit d'agir dessus.
+
+\textbf{16. Si je masque un bouton dans React, suis-je protégé ?}\\
+Non, et c'est un point que le projet prend au sérieux. Le masquage est une commodité
+d'usage. La protection réelle est la dépendance d'autorisation côté serveur. Les tests
+appellent les endpoints directement, sans passer par l'interface, précisément parce que
+c'est ainsi qu'un attaquant procéderait.
+
+\textbf{17. Un administrateur d'entreprise peut-il devenir administrateur de la
+plateforme ?}\\
+Non. La permission \code{platform.admin} est la seule à franchir la frontière entre
+organisations, et une vérification explicite empêche un administrateur d'entreprise de
+se l'attribuer ou de la placer dans un rôle qu'il crée. Deux tests couvrent ces deux
+chemins.
+
+\textbf{18. Comment les mots de passe sont-ils stockés ?}\\
+Hachés avec bcrypt via passlib. Aucun mot de passe en clair n'est stocké ni journalisé.
+Les comptes de démonstration partagent un mot de passe lu d'une variable
+d'environnement, jamais écrit dans le code de l'interface.
+
+\textbf{19. Qu'est-ce qui empêche de modifier le journal d'audit ?}\\
+L'API n'expose aucune route de mise à jour ni de suppression sur cette table. La
+traçabilité repose donc sur l'absence de chemin d'écriture, pas sur une permission qu'on
+pourrait accorder par erreur. La table est aussi dépourvue de clés étrangères, pour
+qu'une trace survive à la suppression de l'entité qu'elle décrit.
+
+\textbf{20. Quelles faiblesses de sécurité connaissez-vous dans la version actuelle ?}\\
+Trois, assumées. La clé de signature et le mot de passe du superutilisateur ont des
+valeurs par défaut à redéfinir avant production. Il n'existe ni jeton de
+rafraîchissement ni liste de révocation, donc un jeton volé reste exploitable jusqu'à
+son expiration. Et il n'y a pas d'authentification à deux facteurs, ce qui serait
+attendu en périmètre réglementé.
+
+\subsection*{Sur l'architecture et le code}
+
+\textbf{21. Pourquoi FastAPI plutôt qu'un autre framework ?}\\
+Pour trois propriétés utiles ici : la validation des entrées adossée à Pydantic, la
+documentation OpenAPI générée automatiquement — précieuse pour démontrer le
+comportement de l'API — et le système d'injection de dépendances, qui a permis de
+centraliser l'autorisation en deux fonctions plutôt que de la disperser dans 99~routes.
+
+\textbf{22. Pourquoi séparer les services des routers ?}\\
+Pour que les formules soient testables sans serveur ni base de données. C'est ce qui a
+permis de corriger le calcul du payback et la sémantique du readiness tard dans le
+projet sans redouter de régression.
+
+\textbf{23. Comment gérez-vous l'évolution du schéma ?}\\
+Par trois migrations Alembic versionnées, écrites pour s'appliquer sur une base déjà
+peuplée. La troisième, qui a introduit les périmètres, crée les colonnes avec une valeur
+par défaut le temps de la reprise, recopie les rattachements existants, puis retire la
+valeur par défaut.
+
+\textbf{24. Pourquoi la table utilisateur s'appelle-t-elle \code{app\_user} ?}\\
+Parce que \code{user} est un mot réservé en PostgreSQL.
+
+\textbf{25. Pourquoi conserver \code{department\_id} sur l'utilisateur alors qu'une
+table d'association existe ?}\\
+La colonne désigne le département principal et sert de repli ; la table d'association
+porte les rattachements multiples introduits plus tard. Cette coexistence est le
+résultat d'une migration qui devait préserver les données existantes, et non un choix de
+conception initial.
+
+\subsection*{Sur le périmètre livré}
+
+\textbf{26. Tous les modules du cahier des charges sont-ils terminés ?}\\
+Neuf sur douze le sont. Trois ne le sont que partiellement, et le rapport les détaille :
+l'export de la fiche projet produit du HTML imprimable et non un fichier \code{.docx},
+le suivi de projet dispose de son API mais pas de son écran dédié, et les notifications
+sont persistées sans panneau de consultation.
+
+\textbf{27. Le bouton dit « Export Word / PDF » — est-ce exact ?}\\
+Non, et c'est signalé comme tel dans le rapport. L'API renvoie du JSON et une page HTML
+mise en page pour l'impression. L'utilisateur obtient un PDF via son navigateur, mais
+aucun fichier Word n'est généré. Le libellé est en avance sur la fonction.
+
+\textbf{28. Qu'est-ce qui a été le plus difficile ?}\\
+La reprise du contrôle d'accès. La première version ne comptait que dix permissions,
+toutes en écriture : les quarante-six endpoints de lecture n'étaient protégés que par
+l'authentification, ce qui laissait tout utilisateur connecté lire l'intégralité de son
+organisation. Le durcissement a porté le catalogue à 41~permissions et introduit la
+notion de périmètre, sans casser les modules existants.
+
+\textbf{29. Comment avez-vous validé que le durcissement ne cassait rien ?}\\
+Par une suite de 112~tests, dont 40 couvrent le comportement de chaque rôle et 4 sont
+des garde-fous structurels qui parcourent la table de routage pour vérifier qu'aucun
+endpoint n'est exposé sans contrôle et qu'aucune dépendance d'autorisation n'a été
+silencieusement transformée en paramètre de requête.
+
+\textbf{30. Que feriez-vous différemment en recommençant ?}\\
+Je concevrais le modèle de permissions avant les fonctionnalités, et non après. Le
+rattraper sur un code déjà écrit a coûté plus cher que de le poser d'emblée, et c'est
+la difficulté la plus instructive du projet.

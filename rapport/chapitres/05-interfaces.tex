@@ -1,0 +1,363 @@
+% =====================================================================
+%  Chapitre 4 — Interfaces
+% =====================================================================
+\chapter{Présentation des interfaces}
+\label{chap:interfaces}
+
+Ce chapitre parcourt les quatorze écrans de l'application dans l'ordre où une
+démonstration les enchaîne naturellement. Chaque écran est décrit puis accompagné d'un
+encadré \emph{Présentation orale suggérée}, directement réutilisable en soutenance.
+
+\begin{remarque}[Insertion des captures]
+Les captures sont appelées depuis le répertoire \code{rapport/images/}. Tant qu'un
+fichier n'y figure pas, le document compile et affiche un cadre nommant l'image
+attendue. Il suffit de déposer le fichier au nom indiqué pour que la capture apparaisse.
+\end{remarque}
+
+% =====================================================================
+\section{Connexion}
+
+L'écran de connexion est construit en deux panneaux. À gauche, sur fond vert sombre, la
+promesse du produit et les quatre temps de la démarche, numérotés de
+\emph{01~—~Diagnostiquer} à \emph{04~—~Piloter la valeur}. À droite, sur fond clair, le
+formulaire : adresse électronique professionnelle, mot de passe avec bascule
+d'affichage, et bouton de connexion doté d'un état de chargement.
+
+Quatre états d'erreur distincts sont rendus en clair plutôt qu'en code HTTP :
+identifiants invalides, compte désactivé, saisie incomplète et serveur injoignable.
+
+Aucun identifiant de démonstration n'est écrit dans le composant React. Lorsque le
+serveur tourne en mode développement, un panneau discret propose la liste des comptes,
+obtenue d'un endpoint qui répond 404 en production. En production, ce panneau n'existe
+donc tout simplement pas.
+
+\capture{01-connexion.png}{Écran de connexion}{0.92}
+
+\begin{oral}
+Voici la page d'entrée de la plateforme. Le panneau de gauche résume la démarche en
+quatre temps, du diagnostic au pilotage de la valeur. Le formulaire est volontairement
+sobre. Un point de sécurité mérite d'être signalé : aucun compte de démonstration n'est
+écrit en dur dans le code de l'interface. La liste que vous voyez ici vient d'un
+endpoint qui n'existe qu'en mode développement et qui répond « non trouvé » en
+production. Je me connecte avec le compte de la Direction Générale.
+\end{oral}
+
+% =====================================================================
+\section{Tableau de bord Direction}
+
+C'est l'écran d'accueil des utilisateurs porteurs de la permission
+\code{dashboard.direction}. Il est composé de quatre indicateurs de tête — projets
+actifs, investissement, ROI du portefeuille et risques critiques — chacun assorti d'une
+précision de contexte calculée, par exemple « engagé sur 3,1~M\texteuro{} budgétés ».
+
+Au-dessous, la matrice Impact~$\times$~Faisabilité positionne chaque opportunité, la
+taille de la bulle représentant le bénéfice annuel attendu. À côté, la répartition du
+portefeuille par phase TOGAF, de la qualification à la production. Enfin, un tableau des
+premières priorités, cliquable jusqu'à la fiche projet.
+
+\capture{02-dashboard-direction.png}{Tableau de bord Direction}{0.95}
+
+\begin{oral}
+Voici la vue de la Direction Générale. Ces quatre chiffres ne sont pas saisis : ils sont
+agrégés à la demande depuis les projets, les coûts et les bénéfices. Le ROI de
+portefeuille est le rapport entre les gains cumulés sur trois ans et le coût total de
+possession. La matrice croise l'impact métier et la faisabilité ; la taille de chaque
+bulle est le bénéfice annuel attendu. Le quadrant en haut à droite est ce que
+l'organisation devrait lancer en premier. Toutes les lignes du tableau sont cliquables
+et mènent à la fiche projet correspondante.
+\end{oral}
+
+% =====================================================================
+\section{Tableau de bord Département}
+
+Le même emplacement sert une vue différente à qui porte
+\code{dashboard.department} : opportunités du périmètre, projets actifs, gains annuels
+attendus et risques ouverts. Le périmètre est celui des départements de rattachement de
+l'utilisateur, jamais l'organisation entière.
+
+Suivent les opportunités du périmètre classées par score, la répartition par phase, les
+projets en cours avec leur avancement et leur prochaine gate, les risques classés par
+criticité et les indicateurs métier avec la part de l'écart déjà captée entre la
+référence et la cible.
+
+\capture{03-dashboard-departement.png}{Tableau de bord Département}{0.95}
+
+\begin{oral}
+Même URL, écran différent. Je suis maintenant connecté en responsable de département.
+La plateforme ne se contente pas de masquer des informations : le backend filtre les
+données sur les départements de rattachement de l'utilisateur. Si j'appelais l'API
+directement pour lire une opportunité d'un autre département, je recevrais un 404, pas
+un 403 — répondre 403 confirmerait que la ressource existe.
+\end{oral}
+
+% =====================================================================
+\section{Diagnostic AS-IS et readiness}
+
+L'écran affiche la campagne en cours, son implantation et son taux de complétion. Une
+jauge donne le readiness global sur 100 et le niveau de maturité associé, de
+« Inexistant » à « Optimisé ». À droite, l'échelle de maturité détaillée, puis deux
+bandeaux : les dimensions bloquantes, en ambre, et les points de vigilance.
+
+Deux colonnes séparent le readiness technique du readiness métier et organisationnel,
+chacune assortie de sa moyenne sur~5. La dernière carte, « Preuves collectées »,
+présente chaque dimension avec sa note, son poids, sa confiance et la preuve qui
+l'étaye.
+
+Deux actions sont proposées : exporter la campagne au format CSV et poursuivre le
+diagnostic. Le second bouton s'adapte au droit de l'utilisateur : il devient « Voir le
+questionnaire » pour qui n'a pas \code{diagnostic.answer}.
+
+\capture{04-diagnostic.png}{Diagnostic AS-IS et calcul du readiness}{0.95}
+
+\begin{oral}
+Le readiness est le point de départ de la démarche. Chaque dimension est notée de 0 à 5,
+pondérée par son importance et par la confiance que le répondant accorde à sa propre
+réponse. Cette confiance intervient au numérateur et au dénominateur : une réponse mal
+étayée ne fausse le score ni vers le haut ni vers le bas. Les deux dimensions en ambre
+sont bloquantes : elles sont sous le seuil et marquées critiques, ce qui interdit un
+passage en production tant qu'elles ne sont pas remédiées. Le tableau du bas montre que
+chaque note est adossée à une preuve — c'est ce qui rend le diagnostic auditable.
+\end{oral}
+
+% =====================================================================
+\section{Panneau de saisie du diagnostic}
+
+Le bouton « Poursuivre le diagnostic » ouvre un panneau latéral listant les dimensions
+de la campagne. Chaque ligne permet de régler la note, la confiance et la preuve. Une
+dimension jamais instruite est explicitement signalée comme telle, et non affichée à
+zéro.
+
+L'enregistrement recalcule le readiness immédiatement : le score, les moyennes d'axe, le
+taux de complétion et la liste des dimensions bloquantes sont rafraîchis sans
+rechargement de page.
+
+\capture{05-diagnostic-panneau.png}{Panneau de saisie des dimensions}{0.88}
+
+\begin{oral}
+Je modifie la note de la dimension « Gouvernance data » et je l'accompagne d'une preuve.
+À l'enregistrement, le score global, les deux moyennes d'axe et la liste des dimensions
+bloquantes sont recalculés côté serveur, puis réaffichés. Rien n'est stocké côté
+navigateur : ce que vous voyez sort de la base.
+\end{oral}
+
+% =====================================================================
+\section{Liste des opportunités}
+
+L'écran recense les besoins métier. Un bandeau rappelle à l'utilisateur à périmètre
+restreint qu'il ne voit que ses départements. Un second bandeau, en ambre, signale les
+doublons probables détectés par le croisement interservices, en nommant les codes
+concernés et les termes qu'ils partagent.
+
+Le tableau se filtre par département et par recherche libre sur le titre ou le code.
+Chaque ligne porte son type de solution recommandé, son score et ses actions. Le bouton
+« Nouvelle opportunité » n'apparaît que si l'utilisateur détient
+\code{opportunity.create}.
+
+\capture{06-opportunites.png}{Liste des opportunités et détection de doublons}{0.95}
+
+\begin{oral}
+C'est ici que remontent les besoins. Le bandeau ambre est un des apports du croisement
+interservices : deux départements ont exprimé un besoin très proche sans le savoir, et
+la plateforme les rapproche en s'appuyant sur les termes partagés. Sans cet écran, les
+deux projets seraient financés séparément.
+\end{oral}
+
+% =====================================================================
+\section{Formulaire d'opportunité}
+
+Le formulaire couvre trois blocs. Le rattachement d'abord — département et site — car le
+département détermine le volet spécifique du questionnaire. Le contexte ensuite :
+situation actuelle et points de douleur. Le questionnaire de qualification enfin, dont
+les réponses alimentent directement les quinze faits du moteur.
+
+À l'enregistrement, la qualification est déclenchée automatiquement. Il n'existe pas
+d'opportunité non qualifiée dans la base.
+
+\capture{07-opportunite-formulaire.png}{Création d'une opportunité}{0.92}
+
+\begin{oral}
+Le questionnaire n'est pas décoratif : chaque réponse est un fait d'entrée du moteur de
+qualification. Je déclare ici des données disponibles mais non structurées, du texte
+libre à traiter, et pas de génération de contenu. Je valide. Le moteur s'exécute
+immédiatement et propose un type de solution. Notez qu'il n'y a pas d'étape « lancer la
+qualification » : la création et la qualification sont une seule opération.
+\end{oral}
+
+% =====================================================================
+\section{Architecture et données}
+
+Cet écran tient le référentiel AS-IS en trois sections : les processus, les applications
+du système d'information et les sources de données avec leur score de qualité et
+l'indication d'une vérité terrain disponible.
+
+C'est la matière première du moteur de qualification. Une source de données mal notée ou
+dépourvue de vérité terrain fait échouer les règles bloquantes des types qui exigent un
+apprentissage, et oriente mécaniquement la recommandation vers l'automatisation
+déterministe ou la refonte de processus.
+
+\capture{08-architecture.png}{Référentiel des processus, applications et données}{0.95}
+
+\begin{oral}
+Cet écran explique pourquoi la plateforme refuse parfois de recommander de l'IA. Si la
+source de données d'un processus est notée 2 sur 5 et n'a pas de vérité terrain, la
+règle bloquante du type « apprentissage supervisé » n'est pas satisfaite, et le moteur
+bascule sur de l'automatisation ou sur une refonte de processus. La qualification
+technique arrive donc avant la décision, pas après.
+\end{oral}
+
+% =====================================================================
+\section{Portefeuille}
+
+Le portefeuille présente toutes les opportunités classées par score, avec le bénéfice
+attendu cumulé affiché en sous-titre. Cinq filtres sont disponibles : département, type
+de solution, phase, score minimal et statut. Le tri est ajustable.
+
+L'action « Recalculer la priorisation » n'est proposée qu'aux détenteurs de
+\code{portfolio.prioritize}.
+
+\capture{09-portefeuille.png}{Table du portefeuille priorisé}{0.95}
+
+\begin{oral}
+Le portefeuille est l'écran d'arbitrage. Chaque score est calculé sur six critères
+pondérés, moins une pénalité de risque proportionnelle au produit probabilité par
+impact. Le rang et la vague en découlent : la vague~1 est ce qu'on lance, la vague~2 ce
+qu'on prépare. Rien n'est saisi à la main dans cette colonne.
+\end{oral}
+
+% =====================================================================
+\section{Panneau de repriorisation}
+
+Le panneau expose les six pondérations sous forme de curseurs. Toute grille saisie est
+renormalisée à~1 avant application, de sorte qu'un utilisateur qui pousse un seul critère
+obtient une pondération valide sans avoir à ajuster les cinq autres.
+
+Le recalcul réévalue tout le portefeuille, réattribue les rangs et les vagues, et
+journalise l'opération dans le journal d'audit avec l'ancienne et la nouvelle
+pondération.
+
+\capture{10-repriorisation.png}{Ajustement des pondérations de priorisation}{0.88}
+
+\begin{oral}
+C'est l'écran qui montre que la priorisation est un outil de pilotage, pas une formule
+figée. Si la Direction décide que le contexte impose de privilégier l'impact financier,
+elle pousse ce curseur et relance le calcul. Le classement change réellement : sur le
+jeu de démonstration, douze opportunités changent de rang. Et le changement de
+pondération est lui-même tracé dans le journal d'audit, avec l'ancienne et la nouvelle
+grille.
+\end{oral}
+
+% =====================================================================
+\section{Liste des fiches projet}
+
+Un écran de sélection listant les fiches disponibles, chacune renvoyant au dossier de
+cadrage correspondant. Les fiches ne sont pas des documents importés : elles sont
+assemblées à la demande à partir des données vivantes du portefeuille.
+
+\capture{11-fiches.png}{Sélection d'une fiche projet}{0.9}
+
+\begin{oral}
+Ces fiches ne sont pas stockées comme des documents. Elles sont reconstruites à chaque
+ouverture à partir de l'opportunité, de sa recommandation, de son score, de ses
+indicateurs, de ses risques et de son business case. Une fiche ne peut donc pas être
+périmée par rapport aux données.
+\end{oral}
+
+% =====================================================================
+\section{Fiche projet}
+
+C'est l'écran le plus dense de l'application, et le point d'aboutissement de la
+démarche. Un bandeau d'identité — département, sponsor, responsable métier, responsable
+technique, phase et statut — précède deux colonnes.
+
+La colonne principale déroule le contexte AS-IS et ses points de douleur, la solution
+recommandée avec son patron de solution, sa justification rédigée, les règles satisfaites
+affichées en pastilles, la première alternative écartée et les garde-fous à mettre en
+place ; puis les indicateurs et le bénéfice attendu, et enfin les risques et la
+conformité.
+
+La colonne latérale, sur fond sombre, affiche le score de priorité en grand, le rang sur
+la taille du portefeuille, la vague, puis la contribution détaillée de chacun des six
+critères et la pénalité de risque. Viennent ensuite le business case, réservé aux
+porteurs de \code{finance.read}, la décision de comité et un bloc d'explicabilité.
+
+\capture{12-fiche-projet.png}{Fiche projet complète}{0.95}
+
+\begin{oral}
+Cette fiche est ce qu'un comité d'investissement reçoit. Trois choses la distinguent
+d'un document classique. D'abord, la recommandation est justifiée : les pastilles vertes
+sont les règles qui ont été satisfaites, et la pastille grise est l'alternative écartée
+avec le motif. Ensuite, le score de la colonne de droite est décomposé critère par
+critère, y compris la pénalité de risque. Enfin, les garde-fous sont générés
+automatiquement — sur une opportunité en périmètre GxP, la plateforme ajoute la
+validation informatique, la traçabilité ALCOA+ et la revue humaine obligatoire.
+\end{oral}
+
+\begin{ecart}
+Le bouton porte le libellé « Export Word / PDF ». L'API produit en réalité un rendu JSON
+et une page HTML mise en page pour l'impression : l'utilisateur obtient un PDF par la
+fonction d'impression de son navigateur, mais aucun fichier \code{.docx} n'est généré.
+Le libellé est en avance sur la fonction.
+\end{ecart}
+
+% =====================================================================
+\section{Valeur et ROI}
+
+L'écran consolide les business cases sur un horizon de trois ans. Il présente les gains
+annuels par département, le classement des projets par ROI pour les huit premiers, le
+suivi des indicateurs avant et après, et un tableau détaillé par projet donnant le coût
+total de possession, les gains annuels, le ROI et le délai de retour.
+
+\capture{13-valeur.png}{Pilotage de la valeur et du retour sur investissement}{0.95}
+
+\begin{oral}
+C'est l'écran qui ferme la boucle. Le business case ne sert plus seulement à obtenir un
+budget : la colonne des indicateurs compare la valeur promise à la valeur effectivement
+mesurée. Le délai de retour se calcule sur le seul investissement initial rapporté au
+gain annuel net d'exploitation — y faire figurer trois années de coûts récurrents qui ne
+sont pas encore engagés allongerait artificiellement le délai.
+\end{oral}
+
+% =====================================================================
+\section{Administration}
+
+L'écran d'administration est organisé en trois onglets, dont l'affichage dépend des
+droits : \emph{Organisation}, \emph{Utilisateurs} et \emph{Rôles \& permissions}.
+
+L'onglet Organisation regroupe les informations de l'entreprise, ses sites et ses
+départements. L'onglet Utilisateurs permet de créer un compte, de l'activer ou de le
+désactiver, de lui attribuer des rôles et de le rattacher à des départements et à des
+sites. L'onglet Rôles affiche la grille rôle~$\times$~permission ; les rôles fournis par
+la plateforme y sont en lecture seule, un rôle personnalisé devant être créé pour
+ajuster les droits.
+
+\capture{14-administration.png}{Console d'administration, onglet Rôles et permissions}{0.95}
+
+\begin{oral}
+Voici le module M1. Les onze rôles que vous voyez ne sont pas des libellés décoratifs :
+chacun est un jeu de permissions parmi les quarante et une du catalogue, associé à un
+niveau de périmètre. Les rôles système ne sont pas modifiables, pour qu'un
+administrateur ne puisse pas se retirer involontairement des droits dont la plateforme
+dépend. Il peut en revanche créer ses propres rôles. Une seule permission lui est
+interdite : celle qui franchit la frontière entre organisations.
+\end{oral}
+
+% =====================================================================
+\section{Journal d'audit}
+
+Le dernier écran présente les événements en insertion seule. Chaque ligne porte
+l'horodatage, l'auteur et son adresse électronique, l'action, l'entité concernée et son
+libellé. Le détail expose l'ancienne et la nouvelle valeur.
+
+Le sous-titre de l'écran énonce la propriété qui fait sa valeur : aucune entrée ne peut
+être modifiée ni supprimée. L'API n'expose ni mise à jour ni suppression sur cette
+table.
+
+\capture{15-audit.png}{Journal d'audit en insertion seule}{0.95}
+
+\begin{oral}
+C'est l'écran qui répond à la question « pourquoi cette décision ? » six mois plus tard.
+Chaque modification significative laisse une trace avec son auteur, sa date, l'ancienne
+et la nouvelle valeur. Le point important est qu'il n'existe aucun moyen, ni par
+l'interface ni par l'API, de modifier ou de supprimer une entrée : le journal est en
+insertion seule. C'est une exigence directe du contexte réglementaire pharmaceutique.
+\end{oral}

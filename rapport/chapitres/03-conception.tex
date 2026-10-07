@@ -1,0 +1,609 @@
+% =====================================================================
+%  Chapitre 2 — Conception
+% =====================================================================
+\chapter{Conception du système}
+\label{chap:conception}
+
+\section{Acteurs et rôles}
+
+Le modèle de droits distingue onze rôles fonctionnels. Chacun combine un jeu de
+permissions et un niveau de périmètre, c'est-à-dire l'étendue des données sur
+lesquelles il agit. Les descriptions qui suivent reprennent le catalogue défini dans
+\code{app/core/rbac.py}.
+
+\subsection{Administrateur Medicacom}
+
+\textbf{Mission.} Administrer la plateforme et les organisations clientes : référentiels,
+modèles de questionnaires, rôles disponibles et support des tenants.
+
+\textbf{Périmètre.} Plateforme — le seul rôle qui franchit la frontière des
+organisations.
+
+\textbf{Droits.} Les 41~permissions du catalogue, dont \code{platform.admin}, réservée à
+ce rôle. Un administrateur d'entreprise ne peut ni se l'attribuer ni la placer dans un
+rôle qu'il crée.
+
+\subsection{Administrateur entreprise}
+
+\textbf{Mission.} Administrer son organisation : sites, départements, utilisateurs,
+rôles et paramètres.
+
+\textbf{Périmètre.} Organisation. Il n'accède jamais à une autre.
+
+\textbf{Droits.} 23~permissions : toutes les lectures, plus la gestion de
+l'organisation, des sites, des départements, des comptes et des rôles, ainsi que
+l'accès au journal d'audit.
+
+\textbf{Limitations.} Il n'arbitre pas le portefeuille et ne renseigne pas les
+diagnostics. Son écran d'accueil est la console d'administration, pas un tableau de
+bord.
+
+\subsection{Direction Générale}
+
+\textbf{Mission.} Vision globale du portefeuille, arbitrage et décision de comité.
+
+\textbf{Périmètre.} Organisation.
+
+\textbf{Droits.} 22~permissions : toutes les lectures, le tableau de bord Direction, la
+validation d'opportunité, la repriorisation du portefeuille, le passage de gate,
+la décision de comité sur la fiche projet et la validation des bénéfices financiers.
+
+\textbf{Limitations.} La Direction n'administre pas les comptes et ne renseigne pas le
+questionnaire de diagnostic. Elle le consulte.
+
+\subsection{Responsable de département}
+
+\textbf{Mission.} Piloter les besoins et les projets de son ou ses départements.
+
+\textbf{Périmètre.} Département — le seul rôle dont la portée est restreinte par
+rattachement.
+
+\textbf{Droits.} 18~permissions : création et modification d'opportunités, réponse et
+validation du diagnostic, rédaction de fiche projet, tableau de bord de département.
+
+\textbf{Limitations.} Il consulte les dépendances transverses mais ne modifie rien hors
+de ses départements. Une tentative d'écriture ailleurs répond 403.
+
+\subsection{Contributeur métier}
+
+\textbf{Mission.} Répondre aux questionnaires assignés, documenter les processus et
+proposer des opportunités.
+
+\textbf{Périmètre.} Contributions personnelles.
+
+\textbf{Droits.} 11~permissions, le jeu le plus restreint : lecture de l'organisation et
+de son département, réponse au diagnostic, création et lecture d'opportunités, lecture
+des recommandations et des fiches.
+
+\textbf{Limitations.} Aucun accès au portefeuille consolidé ni aux données financières.
+Aucun arbitrage, aucune validation.
+
+\subsection{DSI / Architecte SI}
+
+\textbf{Mission.} Évaluer la faisabilité technique, tenir l'architecture AS-IS et TO-BE
+ainsi que les dépendances applicatives.
+
+\textbf{Droits.} 16~permissions, dont \code{architecture.manage} qui lui est propre avec
+l'administrateur, et \code{project.validate\_gate} pour les gates techniques.
+
+\subsection{Data Office / Data Engineer}
+
+\textbf{Mission.} Tenir le référentiel des sources de données, leur qualité, leur
+ownership et les dépendances data interservices.
+
+\textbf{Droits.} 14~permissions, dont \code{data.manage}. C'est le seul rôle, avec
+l'administrateur de plateforme, qui écrit dans le référentiel des sources.
+
+\textbf{Limitations.} Il ne gère pas le référentiel applicatif, qui relève du DSI.
+
+\subsection{AI Lead / Data Scientist}
+
+\textbf{Mission.} Analyser les opportunités qualifiées, amender la recommandation avec
+justification, définir les critères de performance et les garde-fous.
+
+\textbf{Droits.} 16~permissions, dont \code{recommendation.override}, qui lui est
+exclusive. C'est le seul rôle autorisé à relancer la qualification d'une opportunité.
+
+\textbf{Limitations.} Il n'administre pas les comptes.
+
+\subsection{Finance / Contrôle de gestion}
+
+\textbf{Mission.} Instruire CAPEX, OPEX et gains, valider les hypothèses du business
+case, comparer valeur attendue et valeur réalisée.
+
+\textbf{Droits.} 15~permissions, dont \code{finance.manage} et \code{finance.validate}.
+
+\textbf{Limitations.} Finance ne touche ni à la recommandation IA ni à l'architecture
+technique. Un appel à l'endpoint de qualification depuis un compte Finance répond 403.
+
+\subsection{PMO / Chef de projet}
+
+\textbf{Mission.} Gérer le cycle de vie des projets : phases, jalons, tâches, risques,
+incidents, budget de suivi et reporting.
+
+\textbf{Droits.} 15~permissions, dont \code{project.manage}.
+
+\textbf{Limitations.} Il ne valide pas les bénéfices financiers.
+
+\subsection{Auditeur / Lecture seule}
+
+\textbf{Mission.} Consulter preuves, scores, versions, décisions et journal d'audit.
+
+\textbf{Droits.} 16~permissions, toutes en lecture, plus \code{audit.read}.
+
+\textbf{Limitations.} Aucune création, modification, suppression ni validation, quel que
+soit le module. Huit tests paramétrés vérifient ce point endpoint par endpoint.
+
+\subsection{Matrice de synthèse}
+
+\begin{table}[H]
+\centering
+\caption{Capacités par rôle, dérivées du catalogue de permissions}
+\label{tab:matrice-roles}
+\small
+\begin{tabular}{@{}L{4.4cm} C{1.6cm} C{1.5cm} C{1.8cm} C{1.7cm} C{1.9cm}@{}}
+\toprule
+\textbf{Rôle} & \textbf{Consul\-tation} & \textbf{Créa\-tion} &
+\textbf{Modifi\-cation} & \textbf{Valida\-tion} & \textbf{Adminis\-tration} \\
+\midrule
+Administrateur Medicacom   & \oui & \oui & \oui & \oui & \oui \\
+Administrateur entreprise  & \oui & \oui & \oui & \non & \oui \\
+Direction Générale         & \oui & \non & \oui & \oui & \non \\
+Responsable de département & \oui & \oui & \oui & \oui & \non \\
+Contributeur métier        & \oui & \oui & \oui & \non & \non \\
+DSI / Architecte SI        & \oui & \oui & \oui & \oui & \non \\
+Data Office / Data Engineer& \oui & \oui & \oui & \non & \non \\
+AI Lead / Data Scientist   & \oui & \oui & \oui & \oui & \non \\
+Finance / Contrôle gestion & \oui & \oui & \oui & \oui & \non \\
+PMO / Chef de projet       & \oui & \oui & \oui & \non & \non \\
+Auditeur / Lecture seule   & \oui & \non & \non & \non & \non \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+La colonne \emph{Validation} recouvre des objets différents selon le rôle, ce que le
+tableau ne peut pas montrer. La Direction valide les opportunités, les gates, les
+fiches et les bénéfices. Le responsable de département ne valide que les campagnes de
+diagnostic. Le DSI et l'AI Lead ne valident que les gates de projet. Finance ne valide
+que les bénéfices financiers. La granularité réelle est celle de la permission, pas
+celle de la colonne.
+
+\section{Cas d'utilisation}
+
+\subsection{Vue générale}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.92, transform shape]
+  % --- acteurs à gauche
+  \node[acteur] (dir)   at (0,4.6)  {Direction Générale};
+  \node[acteur] (resp)  at (0,3.0)  {Responsable de département};
+  \node[acteur] (contrib) at (0,1.4) {Contributeur métier};
+  \node[acteur] (adm)   at (0,-0.2) {Administrateur entreprise};
+
+  % --- acteurs à droite
+  \node[acteur] (dsi)   at (12,4.6) {DSI / Architecte};
+  \node[acteur] (data)  at (12,3.0) {Data Office};
+  \node[acteur] (ai)    at (12,1.4) {AI Lead};
+  \node[acteur] (fin)   at (12,-0.2){Finance};
+  \node[acteur] (pmo)   at (12,-1.8){PMO};
+  \node[acteur] (audit) at (0,-1.8) {Auditeur};
+
+  % --- système
+  \begin{scope}[on background layer]
+    \draw[draw=medicaBorder, fill=medicaBg, rounded corners=8pt]
+      (2.7,-2.9) rectangle (9.3,5.6);
+  \end{scope}
+  \node[font=\small\bfseries, text=medicaDeep] at (6,5.25) {Medicacom AOI Transformation};
+
+  \node[cas] (connect) at (6,4.45) {Se connecter};
+  \node[cas] (diag)    at (4.4,3.5) {Réaliser le diagnostic};
+  \node[cas] (repond)  at (7.6,3.5) {Répondre au questionnaire};
+  \node[cas] (opp)     at (4.4,2.5) {Créer une opportunité};
+  \node[cas] (qualif)  at (7.6,2.5) {Qualifier l'opportunité};
+  \node[cas] (reco)    at (4.4,1.5) {Consulter la recommandation};
+  \node[cas] (over)    at (7.6,1.5) {Amender la recommandation};
+  \node[cas] (prio)    at (4.4,0.5) {Prioriser le portefeuille};
+  \node[cas] (fiche)   at (7.6,0.5) {Générer la fiche projet};
+  \node[cas] (valid)   at (4.4,-0.5) {Valider en comité};
+  \node[cas] (suivi)   at (7.6,-0.5) {Suivre le projet};
+  \node[cas] (roi)     at (4.4,-1.5) {Consulter le ROI};
+  \node[cas] (admin)   at (7.6,-1.5) {Administrer l'organisation};
+  \node[cas] (journal) at (6,-2.4) {Consulter le journal d'audit};
+
+  % --- associations principales
+  \foreach \a in {dir,resp,contrib,adm,audit}
+    \draw[lien] (\a.east) -- (connect.west);
+  \foreach \a in {dsi,data,ai,fin,pmo}
+    \draw[lien] (\a.west) -- (connect.east);
+
+  \draw[lien] (dir.east)   -- (prio.west);
+  \draw[lien] (dir.east)   -- (valid.west);
+  \draw[lien] (dir.east)   -- (roi.west);
+  \draw[lien] (resp.east)  -- (opp.west);
+  \draw[lien] (resp.east)  -- (diag.west);
+  \draw[lien] (contrib.east) -- (repond.west);
+  \draw[lien] (contrib.east) -- (opp.west);
+  \draw[lien] (adm.east)   -- (admin.west);
+  \draw[lien] (audit.east) -- (journal.west);
+
+  \draw[lien] (dsi.west)   -- (qualif.east);
+  \draw[lien] (data.west)  -- (repond.east);
+  \draw[lien] (ai.west)    -- (over.east);
+  \draw[lien] (ai.west)    -- (reco.east);
+  \draw[lien] (fin.west)   -- (roi.east);
+  \draw[lien] (pmo.west)   -- (suivi.east);
+  \draw[lien] (pmo.west)   -- (fiche.east);
+
+  % --- dépendance interne
+  \draw[-{Stealth[length=4pt]}, dashed, draw=medicaGreen] (opp) -- node[midway, above, font=\tiny, text=medicaGreen] {\guillemotleft include\guillemotright} (qualif);
+\end{tikzpicture}
+\caption{Diagramme de cas d'utilisation général}
+\label{fig:uc-general}
+\end{figure}
+
+La relation \guillemotleft~include~\guillemotright{} entre la création d'une opportunité
+et sa qualification n'est pas décorative : dans le code, l'endpoint de création appelle
+systématiquement le moteur de qualification avant de répondre. Il n'existe pas
+d'opportunité non qualifiée.
+
+\subsection{Sous-système Diagnostic et Readiness}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.95, transform shape]
+  \node[acteur] (resp) at (0,2.2) {Responsable de département};
+  \node[acteur] (dsi)  at (0,0.8) {DSI / Data Office};
+  \node[acteur] (dir)  at (0,-0.6) {Direction};
+
+  \begin{scope}[on background layer]
+    \draw[draw=medicaBorder, fill=medicaBg, rounded corners=8pt] (2.8,-1.6) rectangle (10.4,3.1);
+  \end{scope}
+  \node[font=\small\bfseries, text=medicaDeep] at (6.6,2.75) {Module M2 / M5};
+
+  \node[cas] (camp)  at (4.6,2.0) {Ouvrir une campagne};
+  \node[cas] (note)  at (4.6,1.0) {Noter une dimension};
+  \node[cas] (preuve)at (4.6,0.0) {Joindre une preuve};
+  \node[cas] (calc)  at (8.4,1.5) {Calculer le readiness};
+  \node[cas] (bloq)  at (8.4,0.5) {Identifier les dimensions bloquantes};
+  \node[cas] (exp)   at (8.4,-0.6) {Exporter le diagnostic};
+  \node[cas] (valcamp) at (4.6,-1.0) {Valider la campagne};
+
+  \draw[lien] (resp.east) -- (camp.west);
+  \draw[lien] (resp.east) -- (valcamp.west);
+  \draw[lien] (dsi.east)  -- (note.west);
+  \draw[lien] (dsi.east)  -- (preuve.west);
+  \draw[lien] (dir.east)  -- (exp.west);
+  \draw[lien] (dir.east)  -- (calc.west);
+
+  \draw[-{Stealth[length=4pt]}, dashed, draw=medicaGreen] (note) -- node[midway, above, font=\tiny, text=medicaGreen] {\guillemotleft include\guillemotright} (calc);
+  \draw[-{Stealth[length=4pt]}, dashed, draw=medicaGreen] (calc) -- node[midway, right, font=\tiny, text=medicaGreen] {\guillemotleft extend\guillemotright} (bloq);
+\end{tikzpicture}
+\caption{Cas d'utilisation du diagnostic et du calcul de readiness}
+\label{fig:uc-diagnostic}
+\end{figure}
+
+\subsection{Sous-système Portefeuille et Valeur}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.95, transform shape]
+  \node[acteur] (dir) at (0,2.2) {Direction};
+  \node[acteur] (fin) at (0,0.8) {Finance};
+  \node[acteur] (pmo) at (0,-0.6) {PMO};
+
+  \begin{scope}[on background layer]
+    \draw[draw=medicaBorder, fill=medicaBg, rounded corners=8pt] (2.8,-2.2) rectangle (10.4,3.1);
+  \end{scope}
+  \node[font=\small\bfseries, text=medicaDeep] at (6.6,2.75) {Modules M7 / M8 / M9 / M10};
+
+  \node[cas] (prio)  at (4.6,2.0) {Ajuster les pondérations};
+  \node[cas] (recalc)at (8.4,2.0) {Recalculer le classement};
+  \node[cas] (fiche) at (4.6,1.0) {Générer la fiche projet};
+  \node[cas] (dec)   at (8.4,1.0) {Rendre la décision de comité};
+  \node[cas] (cout)  at (4.6,0.0) {Saisir coûts et gains};
+  \node[cas] (bc)    at (8.4,0.0) {Calculer le business case};
+  \node[cas] (gate)  at (4.6,-1.0) {Passer une gate};
+  \node[cas] (suivi) at (8.4,-1.0) {Suivre l'avancement};
+  \node[cas] (roi)   at (6.5,-1.9) {Comparer valeur promise et réalisée};
+
+  \draw[lien] (dir.east) -- (prio.west);
+  \draw[lien] (dir.east) -- (fiche.west);
+  \draw[lien] (fin.east) -- (cout.west);
+  \draw[lien] (fin.east) -- (roi.west);
+  \draw[lien] (pmo.east) -- (gate.west);
+  \draw[lien] (pmo.east) -- (suivi.west);
+
+  \draw[-{Stealth[length=4pt]}, dashed, draw=medicaGreen] (prio) -- node[midway, above, font=\tiny, text=medicaGreen] {\guillemotleft include\guillemotright} (recalc);
+  \draw[-{Stealth[length=4pt]}, dashed, draw=medicaGreen] (cout) -- node[midway, above, font=\tiny, text=medicaGreen] {\guillemotleft include\guillemotright} (bc);
+  \draw[-{Stealth[length=4pt]}, dashed, draw=medicaGreen] (fiche) -- node[midway, above, font=\tiny, text=medicaGreen] {\guillemotleft extend\guillemotright} (dec);
+\end{tikzpicture}
+\caption{Cas d'utilisation de la priorisation, de la fiche projet et de la valeur}
+\label{fig:uc-portefeuille}
+\end{figure}
+
+\section{Modèle de données}
+
+Le schéma compte \textbf{34~tables}, dont quatre tables d'association. Les diagrammes qui
+suivent le découpent en quatre domaines pour rester lisibles. Les noms sont ceux des
+classes SQLAlchemy réelles, la table physique étant précisée lorsqu'elle diffère.
+
+\subsection{Domaine A — Organisation et contrôle d'accès}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.9, transform shape, every node/.style={font=\scriptsize}]
+  \node[classe] (org) at (0,0) {\umlclasse{Organization}{
+    \underline{id} : int\\ name, code (unique)\\ industry, country\\ description}};
+  \node[classe] (site) at (-4.6,-2.9) {\umlclasse{Site}{
+    \underline{id} : int\\ \textit{organization\_id} FK\\ name, code\\ city, country, site\_type}};
+  \node[classe] (dept) at (0,-2.9) {\umlclasse{Department}{
+    \underline{id} : int\\ \textit{organization\_id} FK\\ \textit{site\_id} FK\\ name, code, family\\ head\_name}};
+  \node[classe] (user) at (5,-2.9) {\umlclasse{User (app\_user)}{
+    \underline{id} : int\\ \textit{organization\_id} FK\\ \textit{department\_id} FK\\ email (unique)\\ full\_name, job\_title\\ hashed\_password\\ is\_active, is\_superuser\\ last\_login\_at}};
+  \node[classe] (role) at (5,-6.6) {\umlclasse{Role}{
+    \underline{id} : int\\ \textit{organization\_id} FK\\ code, label\\ scope\_level\\ is\_system, is\_platform}};
+  \node[classe] (perm) at (0,-6.6) {\umlclasse{Permission}{
+    \underline{id} : int\\ code (unique)\\ label, module, group}};
+
+  \draw[lien] (org.west) -| node[near start, above, font=\tiny] {1..*} (site.north);
+  \draw[lien] (org.south) -- node[midway, right, font=\tiny] {1..*} (dept.north);
+  \draw[lien] (org.east) -| node[near start, above, font=\tiny] {1..*} (user.north);
+  \draw[lien] (org.east) -| ([xshift=0.6cm]role.north);
+  \draw[lien] (dept.east) -- node[midway, above, font=\tiny] {0..1} (user.west);
+  \draw[lien] (user.south) -- node[midway, right, font=\tiny] {\textit{user\_role} *..*} (role.north);
+  \draw[lien] (role.west) -- node[midway, above, font=\tiny] {\textit{role\_permission} *..*} (perm.east);
+  \draw[lien, dashed] (user.west) -- node[midway, below, font=\tiny] {\textit{user\_department} *..*} (dept.east);
+\end{tikzpicture}
+\caption{Domaine A — Organisation et contrôle d'accès}
+\label{fig:classes-rbac}
+\end{figure}
+
+Quatre points méritent commentaire.
+
+\begin{itemize}
+  \item La table \code{User} s'appelle physiquement \code{app\_user}, \code{user} étant
+    un mot réservé en PostgreSQL.
+  \item Les permissions sont \emph{globales à la plateforme} : seuls les rôles, qui les
+    regroupent, portent un \code{organization\_id}. Deux organisations partagent donc le
+    même catalogue de permissions mais ont chacune leurs rôles.
+  \item \code{User.department\_id} coexiste avec la table d'association
+    \code{user\_department}. Le premier désigne le département principal et sert de
+    repli ; la seconde porte les rattachements multiples. Cette coexistence est le
+    résultat d'une migration qui devait préserver les données existantes.
+  \item \code{Role.scope\_level} porte le périmètre par défaut. Le périmètre effectif
+    d'un utilisateur est le plus large de ceux de ses rôles.
+\end{itemize}
+
+\subsection{Domaine B — Diagnostic, architecture et opportunités}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.88, transform shape, every node/.style={font=\scriptsize}]
+  \node[classe] (ass) at (0,0) {\umlclasse{Assessment}{
+    \underline{id} : int\\ \textit{organization\_id} FK\\ \textit{site\_id}, \textit{department\_id} FK\\ name, campaign, status\\ blocking\_threshold\\ completion\_rate}};
+  \node[classe] (resp) at (0,-3.4) {\umlclasse{AssessmentResponse}{
+    \underline{id} : int\\ \textit{assessment\_id} FK\\ axis, dimension\_code\\ dimension\_label, question\\ score (0--5), weight\\ confidence (0--1)\\ evidence, is\_critical}};
+  \node[classe] (opp) at (5.8,-1.2) {\umlclasse{Opportunity}{
+    \underline{id} : int\\ \textit{organization\_id} FK\\ \textit{department\_id}, \textit{site\_id} FK\\ \textit{process\_id} FK\\ code, title, summary\\ as\_is\_context, pain\_points\\ answers : JSON\\ 15 faits de qualification\\ 6 composantes de score\\ risk\_probability, risk\_impact\\ priority\_score, rank, wave\\ score\_explanation : JSON}};
+  \node[classe] (reco) at (11.4,0.2) {\umlclasse{AIRecommendation}{
+    \underline{id} : int\\ \textit{opportunity\_id} FK (1:1)\\ ai\_type, ai\_type\_label\\ solution\_pattern\\ rationale, confidence\\ fired\_rules : JSON\\ alternatives : JSON\\ guardrails : JSON}};
+  \node[classe] (dep) at (11.4,-3.4) {\umlclasse{Dependency}{
+    \underline{id} : int\\ \textit{source\_opportunity\_id} FK\\ \textit{target\_opportunity\_id} FK\\ kind, asset\_ref, label\\ strength, is\_blocking}};
+  \node[classe] (arch) at (5.8,-5.9) {\umlclasse{Process / Application / DataSource / KPI}{
+    Référentiel AS-IS, chacun rattaché à l'organisation\\
+    DataSource : quality\_score, has\_ground\_truth\\
+    KPI : baseline, target, current}};
+
+  \draw[lien] (ass.south) -- node[midway, right, font=\tiny] {1..*} (resp.north);
+  \draw[lien] (opp.east) -- node[midway, above, font=\tiny] {1..1} (reco.west);
+  \draw[lien] (opp.east) -| node[near start, below, font=\tiny] {*..*} (dep.west);
+  \draw[lien] (opp.south) -- node[midway, right, font=\tiny] {0..1} (arch.north);
+\end{tikzpicture}
+\caption{Domaine B — Diagnostic, référentiel d'architecture et opportunités}
+\label{fig:classes-diagnostic}
+\end{figure}
+
+La table \code{opportunity} est la plus large du schéma avec 48~colonnes. Elle regroupe
+trois familles d'information : le contexte métier rédigé, quinze faits booléens ou
+numériques qui alimentent le moteur de qualification, et six composantes de score
+assorties du résultat calculé. Le champ \code{score\_explanation}, de type JSON,
+conserve la décomposition du score au moment du dernier calcul.
+
+\code{AIRecommendation} entretient une relation un à un avec l'opportunité. Son nom
+contient « AI » parce qu'elle décrit un type de solution d'intelligence artificielle ;
+elle est produite par un moteur de règles, non par un modèle.
+
+\subsection{Domaine C — Projets et valeur}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.88, transform shape, every node/.style={font=\scriptsize}]
+  \node[classe] (proj) at (0,0) {\umlclasse{Project}{
+    \underline{id} : int\\ \textit{organization\_id} FK\\ \textit{opportunity\_id} FK (1:1)\\ \textit{department\_id} FK\\ code, name, phase, status\\ sponsor, owners\\ budget\_eur, committed\_eur\\ progress, next\_gate\_date}};
+  \node[classe] (stage) at (5.4,1.4) {\umlclasse{Stage}{
+    \underline{id} : int\\ \textit{project\_id} FK\\ code, name, sequence\\ status, gate\_passed\\ gate\_criteria : JSON}};
+  \node[classe] (ms) at (5.4,-1.0) {\umlclasse{Milestone}{
+    \underline{id} : int\\ \textit{project\_id}, \textit{stage\_id} FK\\ name, due\_date\\ status, is\_gate}};
+  \node[classe] (task) at (5.4,-3.2) {\umlclasse{Task}{
+    \underline{id} : int\\ \textit{project\_id}, \textit{stage\_id} FK\\ title, assignee\\ status, due\_date, effort}};
+  \node[classe] (risk) at (0,-3.6) {\umlclasse{Risk}{
+    \underline{id} : int\\ \textit{project\_id} FK\\ \textit{opportunity\_id} FK\\ title, category\\ probability (1--5)\\ impact (1--5)\\ severity, status}};
+  \node[classe] (mit) at (0,-6.4) {\umlclasse{Mitigation}{
+    \underline{id} : int\\ \textit{risk\_id} FK\\ action, owner\\ due\_date, status\\ residual\_prob/impact}};
+  \node[classe] (cost) at (10.6,0.6) {\umlclasse{Cost}{
+    \underline{id} : int\\ \textit{project\_id} FK\\ \textit{opportunity\_id} FK\\ label, category, nature\\ amount\_eur, recurring}};
+  \node[classe] (ben) at (10.6,-2.2) {\umlclasse{Benefit}{
+    \underline{id} : int\\ \textit{opportunity\_id} FK\\ \textit{kpi\_id} FK\\ annual\_amount\_eur\\ realization\_rate\\ pnl\_line}};
+  \node[classe] (meas) at (10.6,-5.0) {\umlclasse{Measurement}{
+    \underline{id} : int\\ \textit{kpi\_id} FK\\ measured\_on, value\\ period\_label, source}};
+
+  \draw[lien] (proj.east) -- node[midway, above, font=\tiny] {1..*} (stage.west);
+  \draw[lien] (proj.east) -- node[midway, above, font=\tiny] {1..*} (ms.west);
+  \draw[lien] (proj.east) -- node[midway, below, font=\tiny] {1..*} (task.west);
+  \draw[lien] (proj.south) -- node[midway, right, font=\tiny] {1..*} (risk.north);
+  \draw[lien] (risk.south) -- node[midway, right, font=\tiny] {1..*} (mit.north);
+  \draw[lien] (stage.east) -| (cost.north);
+  \draw[lien] (ben.west) -- node[midway, above, font=\tiny] {0..1} (task.east);
+\end{tikzpicture}
+\caption{Domaine C — Cycle de vie des projets et valorisation}
+\label{fig:classes-projets}
+\end{figure}
+
+\code{Cost} et \code{Benefit} peuvent être rattachés soit à une opportunité, soit à un
+projet. Dans le jeu de démonstration ils le sont à l'opportunité, ce qui permet de
+calculer un business case avant même que le projet n'existe.
+
+\subsection{Domaine D — Gouvernance documentaire et audit}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.92, transform shape, every node/.style={font=\scriptsize}]
+  \node[classe] (doc) at (0,0) {\umlclasse{Document}{
+    \underline{id} : int\\ \textit{organization\_id} FK\\ \textit{opportunity\_id} FK\\ \textit{project\_id} FK\\ code, title, doc\_type\\ status, current\_version\\ author}};
+  \node[classe] (ver) at (5.4,1.2) {\umlclasse{Version}{
+    \underline{id} : int\\ \textit{document\_id} FK\\ number, label\\ content : JSON\\ change\_summary\\ created\_by, created\_at}};
+  \node[classe] (app) at (5.4,-1.6) {\umlclasse{Approval}{
+    \underline{id} : int\\ \textit{document\_id} FK\\ \textit{opportunity\_id} FK\\ \textit{project\_id} FK\\ \textit{approver\_user\_id} FK\\ stage\_code, committee\\ decision, decided\_on}};
+  \node[classe] (log) at (0,-4.2) {\umlclasse{AuditLog — insertion seule}{
+    \underline{id} : int\\ organization\_id, user\_id\\ user\_email\\ action, entity\_type\\ entity\_id, entity\_label\\ old\_value : JSON\\ new\_value : JSON\\ ip\_address, created\_at}};
+  \node[classe] (notif) at (6,-4.6) {\umlclasse{Notification}{
+    \underline{id} : int\\ \textit{organization\_id} FK\\ \textit{user\_id} FK\\ title, body, level\\ entity\_type, entity\_id\\ is\_read}};
+
+  \draw[lien] (doc.east) -- node[midway, above, font=\tiny] {1..*} (ver.west);
+  \draw[lien] (doc.east) -- node[midway, below, font=\tiny] {1..*} (app.west);
+  \draw[lien, dashed, draw=medicaAmber] (log.north) -- node[midway, right, font=\tiny, text=medicaAmber]
+    {trace toute écriture} (doc.south);
+\end{tikzpicture}
+\caption{Domaine D — Documents versionnés, approbations et journal d'audit}
+\label{fig:classes-audit}
+\end{figure}
+
+\code{AuditLog} est volontairement dépourvue de clés étrangères. Une entrée d'audit doit
+survivre à la suppression de l'entité qu'elle décrit : si l'opportunité est effacée, la
+trace de sa suppression doit subsister. Les identifiants y sont donc de simples entiers,
+sans contrainte référentielle.
+
+\section{Architecture technique}
+
+\subsection{Vue d'ensemble}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=0.65cm, scale=0.95, transform shape]
+  \node[blocsombre, text width=3.4cm] (user) {\textbf{Utilisateur}\\\scriptsize navigateur};
+
+  \node[bloc, below=of user, text width=10.5cm, fill=medicaSoft, draw=medicaGreen] (front)
+    {\textbf{Frontend React 18 + TypeScript} \\[2pt]
+     \scriptsize Vite · React Router · TanStack Query · Recharts · axios};
+
+  \node[bloc, below=of front, text width=10.5cm, fill=white, draw=medicaTeal] (api)
+    {\textbf{API REST — 99 endpoints sous \code{/api/v1}} \\[2pt]
+     \scriptsize JSON · OpenAPI sur \code{/docs} · CORS restreint aux origines déclarées};
+
+  \node[bloc, below=of api, text width=10.5cm, fill=white, draw=medicaGreen] (fastapi)
+    {\textbf{FastAPI} — routers par module (M1 à M12) \\[2pt]
+     \scriptsize Dépendances : session, utilisateur courant, permission, périmètre};
+
+  \node[bloc, below=of fastapi, text width=10.5cm, fill=medicaSoft, draw=medicaGreen] (services)
+    {\textbf{Services métier} — sans dépendance à FastAPI \\[2pt]
+     \scriptsize readiness · recommendation · scoring · crossing · value · questionnaire · audit};
+
+  \node[bloc, below=of services, text width=10.5cm, fill=white, draw=medicaTeal] (orm)
+    {\textbf{SQLAlchemy 2.0} — 34 tables, sessions par requête \\[2pt]
+     \scriptsize Migrations versionnées par Alembic};
+
+  \node[blocsombre, below=of orm, text width=10.5cm] (db)
+    {\textbf{PostgreSQL} \\[2pt]\scriptsize Filtrage \code{organization\_id} sur toute table métier};
+
+  \draw[flechevert] (user) -- (front);
+  \draw[flechevert] (front) -- node[right, font=\scriptsize, text=medicaMuted] {HTTPS + jeton JWT} (api);
+  \draw[flechevert] (api) -- (fastapi);
+  \draw[flechevert] (fastapi) -- (services);
+  \draw[flechevert] (services) -- (orm);
+  \draw[flechevert] (orm) -- (db);
+
+  % éléments transverses
+  \node[bloc, right=1.1cm of fastapi, text width=2.6cm, fill=medicaBg, draw=medicaAmber, font=\scriptsize]
+    (sec) {\textbf{Sécurité}\\ JWT HS256\\ bcrypt\\ RBAC\\ périmètre};
+  \draw[fleche, dashed, draw=medicaAmber] (sec) -- (fastapi);
+
+  \node[bloc, right=1.1cm of db, text width=2.6cm, fill=medicaBg, draw=medicaTeal, font=\scriptsize]
+    (docker) {\textbf{Docker}\\ postgres:16\\ backend\\ frontend};
+  \draw[fleche, dashed, draw=medicaTeal] (docker) -- (db);
+\end{tikzpicture}
+\caption{Architecture en couches de la plateforme}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Frontend}
+
+L'interface est une application monopage construite avec React~18 et TypeScript,
+servie par Vite. Le routage est assuré par React Router, les appels réseau par axios
+encapsulé dans des hooks TanStack Query, et les graphiques par Recharts.
+
+Le point structurant est que \emph{la navigation dérive des permissions}. Le composant
+\code{Layout} filtre les entrées de menu selon les permissions renvoyées par
+\code{/auth/me} ; une entrée n'apparaît que si son écran est réellement accessible. Le
+même principe gouverne les boutons d'action.
+
+\subsection{Backend}
+
+L'API est écrite en Python~3.12 avec FastAPI. Elle est organisée en dix routers, un par
+domaine fonctionnel, montés sous le préfixe \code{/api/v1}.
+
+La logique métier vit dans sept services qui n'importent rien de FastAPI. Cette
+séparation a une conséquence pratique : les formules de readiness, de score et de ROI
+se testent en appelant directement les fonctions, sans serveur HTTP ni base de données.
+
+\subsection{Base de données}
+
+PostgreSQL héberge les 34~tables. Le schéma est versionné par trois migrations Alembic,
+écrites pour s'appliquer sur une base déjà peuplée. La troisième, qui a introduit les
+périmètres, crée les colonnes avec une valeur par défaut serveur le temps de la reprise,
+recopie les rattachements existants depuis \code{department\_id}, puis retire la valeur
+par défaut.
+
+\subsection{API}
+
+L'API compte 99~endpoints répartis comme suit.
+
+\begin{table}[H]
+\centering
+\caption{Répartition des endpoints par domaine}
+\label{tab:endpoints}
+\small
+\begin{tabular}{@{}L{3.6cm} C{1.6cm} L{8.2cm}@{}}
+\toprule
+\textbf{Préfixe} & \textbf{Nombre} & \textbf{Objet} \\
+\midrule
+\code{/org}           & 18 & Organisation, sites, départements, utilisateurs, rôles \\
+\code{/projects}      & 16 & Projets, phases, jalons, tâches, risques, gates \\
+\code{/crossings}     & 14 & Processus, applications, données, dépendances, doublons \\
+\code{/opportunities} & 12 & Opportunités, qualification, priorisation \\
+\code{/value}         &  9 & Coûts, bénéfices, mesures, business case \\
+\code{/diagnostic}    &  8 & Campagnes, réponses, readiness \\
+\code{/sheets}        &  7 & Fiches projet, versions, approbations, export \\
+\code{/auth}          &  5 & Connexion, profil, mot de passe \\
+\code{/admin}         &  4 & Journal d'audit, notifications \\
+\code{/dashboards}    &  4 & Agrégations Direction, département, portefeuille \\
+Système               &  2 & Sonde de santé et racine \\
+\midrule
+\textbf{Total}        & \textbf{99} & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Déploiement}
+
+Un fichier \code{docker-compose.yml} décrit trois services : PostgreSQL~16 avec sonde
+de santé et volume persistant, le backend construit depuis \code{backend/Dockerfile}, et
+le frontend depuis \code{frontend/Dockerfile}. Le backend attend que la base soit saine
+avant de démarrer.
+
+\begin{remarque}[Sur la version de PostgreSQL]
+Le fichier Docker déclare \code{postgres:16-alpine}. L'instance utilisée pendant le
+développement est une PostgreSQL~12.4 installée localement. Aucune fonctionnalité
+spécifique à la version~16 n'est employée, mais cet écart mérite d'être connu avant une
+mise en production.
+\end{remarque}

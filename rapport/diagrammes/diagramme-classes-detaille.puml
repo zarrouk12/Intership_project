@@ -1,0 +1,682 @@
+@startuml diagramme-classes-detaille
+' =====================================================================
+'  Medicacom AOI Transformation — Diagramme de classes general
+'
+'  Genere a partir des modeles SQLAlchemy reels de backend/app/models/.
+'  34 tables : 30 entites + 4 tables d'association.
+'  Aucune classe fictive.
+'
+'  Rendu :  plantuml -tpng  diagramme-classes.puml
+'           plantuml -tsvg  diagramme-classes.puml
+'           plantuml -tpdf  diagramme-classes.puml
+' =====================================================================
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #0F5E44
+  ArrowColor #5E6F67
+  FontColor #16241E
+  AttributeFontColor #16241E
+  AttributeFontSize 11
+  StereotypeFontColor #5E6F67
+}
+skinparam package {
+  BackgroundColor #EDF2EF
+  BorderColor #E1E8E4
+  FontColor #0F5E44
+  FontStyle bold
+}
+skinparam note {
+  BackgroundColor #E6F1EB
+  BorderColor #157F5C
+  FontColor #16241E
+}
+
+title Medicacom AOI Transformation — Diagramme de classes general
+
+note as N1
+  **Conventions appliquees a tout le schema**
+  * Toute table metier porte <b>organization_id</b> (cloisonnement multi-entreprises).
+  * Toute table porte <b>created_at</b> et <b>updated_at</b>, omis ci-dessous pour la lisibilite.
+  * <b>app_user</b> est le nom physique de la table User : "user" est un mot reserve PostgreSQL.
+end note
+
+' =====================================================================
+package "A. Organisation et controle d'acces (M1)" #F4F8F6 {
+
+  class Organization {
+    + id : int <<PK>>
+    --
+    name : str
+    code : str <<unique>>
+    industry : str
+    country : str
+    description : text
+  }
+
+  class Site {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    --
+    name : str
+    code : str
+    city : str
+    country : str
+    site_type : str
+  }
+
+  class Department {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # site_id : int <<FK>>
+    --
+    name : str
+    code : str
+    family : str
+    head_name : str
+    description : text
+  }
+
+  class User <<app_user>> {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # department_id : int <<FK>>  (departement principal)
+    --
+    email : str <<unique>>
+    full_name : str
+    job_title : str
+    hashed_password : str  (bcrypt)
+    is_active : bool
+    is_superuser : bool
+    last_login_at : datetime
+  }
+
+  class Role {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    --
+    code : str
+    label : str
+    description : text
+    scope_level : str  {platform | organization | site | department | own}
+    is_system : bool
+    is_platform : bool
+  }
+
+  class Permission {
+    + id : int <<PK>>
+    --
+    code : str <<unique>>
+    label : str
+    module : str
+    group : str
+  }
+
+  class UserRole <<table d'association>> {
+    # user_id : int <<FK>>
+    # role_id : int <<FK>>
+  }
+
+  class UserDepartment <<table d'association>> {
+    # user_id : int <<FK>>
+    # department_id : int <<FK>>
+  }
+
+  class UserSite <<table d'association>> {
+    # user_id : int <<FK>>
+    # site_id : int <<FK>>
+  }
+
+  class RolePermission <<table d'association>> {
+    # role_id : int <<FK>>
+    # permission_id : int <<FK>>
+  }
+}
+
+' =====================================================================
+package "B. Diagnostic et readiness (M2, M5)" #F4F8F6 {
+
+  class Assessment {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # site_id : int <<FK>>
+    # department_id : int <<FK>>
+    --
+    name : str
+    campaign : str
+    status : str
+    started_on : date
+    completed_on : date
+    completion_rate : float  (calcule, jamais saisi)
+    blocking_threshold : float  (2.5 par defaut)
+    notes : text
+  }
+
+  class AssessmentResponse {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # assessment_id : int <<FK>>
+    --
+    axis : str  {technique | metier}
+    dimension_code : str
+    dimension_label : str
+    question : text
+    score : float  [0..5]
+    weight : float
+    confidence : float  [0..1] — 0 = dimension non instruite
+    evidence : text
+    is_critical : bool
+    owner : str
+  }
+}
+
+' =====================================================================
+package "C. Referentiel AS-IS (M6)" #F4F8F6 {
+
+  class Process {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # department_id : int <<FK>>
+    --
+    code : str
+    name : str
+    description : text
+    maturity : float
+    volume_per_month : int
+    manual_effort_days : float
+    is_gxp : bool
+  }
+
+  class Application {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    --
+    name : str
+    vendor : str
+    category : str
+    has_api : bool
+    criticality : str
+    validated_gxp : bool
+    notes : text
+  }
+
+  class DataSource {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # application_id : int <<FK>>
+    --
+    name : str
+    kind : str
+    format : str
+    history_months : int
+    volume : str
+    quality_score : float
+    has_ground_truth : bool
+    personal_data : bool
+    owner : str
+  }
+
+  class KPI {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # department_id : int <<FK>>
+    # opportunity_id : int <<FK>>
+    --
+    code : str
+    name : str
+    unit : str
+    direction : str
+    baseline_value : float
+    target_value : float
+    current_value : float
+    baseline_label : str
+    target_label : str
+    description : text
+  }
+}
+
+' =====================================================================
+package "D. Opportunites et qualification (M3, M4, M7)" #F4F8F6 {
+
+  class Opportunity {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # department_id : int <<FK>>
+    # site_id : int <<FK>>
+    # process_id : int <<FK>>
+    == Identification ==
+    code : str
+    title : str
+    summary : text
+    == Contexte metier ==
+    as_is_context : text
+    pain_points : text
+    desired_outcome : text
+    sponsor : str
+    business_owner : str
+    technical_owner : str
+    phase : str
+    status : str
+    answers : json
+    == Faits de qualification (entrees du moteur) ==
+    data_available : bool
+    data_structured : bool
+    data_quality : float
+    ground_truth_available : bool
+    unstructured_text : bool
+    image_or_video : bool
+    content_generation : bool
+    multi_step_autonomy : bool
+    rule_based : bool
+    repetitive_task : bool
+    reporting_need : bool
+    process_unstable : bool
+    regulated_gxp : bool
+    human_in_the_loop : bool
+    volume_per_month : int
+    == Criteres de priorisation (0..100) ==
+    impact_business : float
+    impact_financial : float
+    feasibility : float
+    alignment : float
+    readiness : float
+    synergies : float
+    == Risque et resultat ==
+    risk_probability : int  [1..5]
+    risk_impact : int  [1..5]
+    priority_score : float
+    priority_rank : int
+    wave : int
+    score_explanation : json
+    expected_benefit_eur : float
+    estimated_cost_eur : float
+  }
+
+  class AIRecommendation {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # opportunity_id : int <<FK>>
+    --
+    ai_type : str
+    ai_type_label : str
+    solution_pattern : str
+    rationale : text
+    confidence : float
+    fired_rules : json
+    alternatives : json
+    guardrails : json
+  }
+
+  class Dependency {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # source_opportunity_id : int <<FK>>
+    # target_opportunity_id : int <<FK>>
+    --
+    kind : str
+    asset_ref : str
+    label : str
+    strength : float
+    is_blocking : bool
+    notes : text
+  }
+}
+
+' =====================================================================
+package "E. Cycle de vie des projets (M9)" #F4F8F6 {
+
+  class Project {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # opportunity_id : int <<FK>>
+    # department_id : int <<FK>>
+    --
+    code : str
+    name : str
+    phase : str
+    status : str
+    sponsor : str
+    business_owner : str
+    technical_owner : str
+    start_date : date
+    end_date : date
+    next_gate_date : date
+    next_gate_label : str
+    budget_eur : float
+    committed_eur : float
+    progress : float
+    summary : text
+  }
+
+  class Stage {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # project_id : int <<FK>>
+    --
+    code : str
+    name : str
+    sequence : int
+    status : str
+    gate_passed : bool
+    gate_criteria : json
+    start_date : date
+    end_date : date
+  }
+
+  class Milestone {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # project_id : int <<FK>>
+    # stage_id : int <<FK>>
+    --
+    name : str
+    due_date : date
+    achieved_on : date
+    status : str
+    is_gate : bool
+  }
+
+  class Task {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # project_id : int <<FK>>
+    # stage_id : int <<FK>>
+    --
+    title : str
+    assignee : str
+    status : str
+    due_date : date
+    effort_days : float
+    description : text
+  }
+
+  class Risk {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # project_id : int <<FK>>
+    # opportunity_id : int <<FK>>
+    --
+    title : str
+    category : str
+    probability : int  [1..5]
+    impact : int  [1..5]
+    severity : str
+    status : str
+    owner : str
+    description : text
+  }
+
+  class Mitigation {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # risk_id : int <<FK>>
+    --
+    action : str
+    owner : str
+    due_date : date
+    status : str
+    residual_probability : int
+    residual_impact : int
+  }
+
+  class Issue {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # project_id : int <<FK>>
+    --
+    title : str
+    severity : str
+    status : str
+    owner : str
+    opened_on : date
+    closed_on : date
+    description : text
+    context : json
+  }
+}
+
+' =====================================================================
+package "F. Pilotage de la valeur (M10)" #F4F8F6 {
+
+  class Cost {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # project_id : int <<FK>>
+    # opportunity_id : int <<FK>>
+    --
+    label : str
+    category : str
+    nature : str
+    amount_eur : float
+    recurring : bool  (false = CAPEX, true = OPEX)
+    year : int
+    notes : text
+  }
+
+  class Benefit {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # project_id : int <<FK>>
+    # opportunity_id : int <<FK>>
+    # kpi_id : int <<FK>>
+    --
+    label : str
+    category : str
+    nature : str
+    annual_amount_eur : float
+    realization_rate : float
+    pnl_line : str
+    start_year : int
+    notes : text
+  }
+
+  class Measurement {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # kpi_id : int <<FK>>
+    # project_id : int <<FK>>
+    --
+    measured_on : date
+    value : float
+    period_label : str
+    source : str
+    comment : text
+  }
+}
+
+' =====================================================================
+package "G. Gouvernance documentaire et audit (M8, M12)" #F4F8F6 {
+
+  class Document {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # opportunity_id : int <<FK>>
+    # project_id : int <<FK>>
+    --
+    code : str
+    title : str
+    doc_type : str
+    status : str
+    current_version : int
+    author : str
+  }
+
+  class Version {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # document_id : int <<FK>>
+    --
+    number : int
+    label : str
+    content : json
+    change_summary : text
+    created_by : str
+  }
+
+  class Approval {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # document_id : int <<FK>>
+    # opportunity_id : int <<FK>>
+    # project_id : int <<FK>>
+    # approver_user_id : int <<FK>>
+    --
+    stage_code : str
+    committee : str
+    approver_name : str
+    decision : str
+    decided_on : date
+    comment : text
+  }
+
+  class Notification {
+    + id : int <<PK>>
+    # organization_id : int <<FK>>
+    # user_id : int <<FK>>
+    --
+    title : str
+    body : text
+    level : str
+    entity_type : str
+    entity_id : int
+    is_read : bool
+  }
+
+  class AuditLog <<insertion seule>> {
+    + id : int <<PK>>
+    organization_id : int  (sans contrainte FK)
+    user_id : int  (sans contrainte FK)
+    --
+    user_email : str
+    action : str
+    entity_type : str
+    entity_id : int
+    entity_label : str
+    old_value : json
+    new_value : json
+    ip_address : str
+    created_at : datetime
+  }
+}
+
+' =====================================================================
+'  Relations — domaine A
+' =====================================================================
+Organization "1" *-- "0..*" Site : héberge >
+Organization "1" *-- "0..*" Department : structure >
+Organization "1" *-- "0..*" User : emploie >
+Organization "1" *-- "0..*" Role : définit >
+Site "1" o-- "0..*" Department : localise >
+Department "0..1" o-- "0..*" User : département principal >
+
+User "1" -- "0..*" UserRole
+UserRole "0..*" -- "1" Role
+User "1" -- "0..*" UserDepartment
+UserDepartment "0..*" -- "1" Department
+User "1" -- "0..*" UserSite
+UserSite "0..*" -- "1" Site
+Role "1" -- "0..*" RolePermission
+RolePermission "0..*" -- "1" Permission
+
+' =====================================================================
+'  Relations — domaine B
+' =====================================================================
+Organization "1" *-- "0..*" Assessment
+Assessment "1" *-- "1..*" AssessmentResponse : dimensions notées >
+Site "0..1" o-- "0..*" Assessment
+Department "0..1" o-- "0..*" Assessment
+
+' =====================================================================
+'  Relations — domaine C
+' =====================================================================
+Organization "1" *-- "0..*" Process
+Organization "1" *-- "0..*" Application
+Organization "1" *-- "0..*" KPI
+Department "0..1" o-- "0..*" Process
+Application "0..1" o-- "0..*" DataSource : expose >
+
+' =====================================================================
+'  Relations — domaine D
+' =====================================================================
+Organization "1" *-- "0..*" Opportunity
+Department "0..1" o-- "0..*" Opportunity : porte >
+Site "0..1" o-- "0..*" Opportunity
+Process "0..1" o-- "0..*" Opportunity : améliore >
+Opportunity "1" *-- "1" AIRecommendation : qualifiée par >
+Opportunity "1" o-- "0..*" KPI : mesurée par >
+Opportunity "1" -- "0..*" Dependency : source >
+Opportunity "1" -- "0..*" Dependency : cible >
+
+' =====================================================================
+'  Relations — domaine E
+' =====================================================================
+Organization "1" *-- "0..*" Project
+Opportunity "1" o-- "0..1" Project : devient >
+Department "0..1" o-- "0..*" Project
+Project "1" *-- "1..*" Stage : phases >
+Project "1" *-- "0..*" Milestone
+Project "1" *-- "0..*" Task
+Project "1" *-- "0..*" Risk
+Project "1" *-- "0..*" Issue
+Stage "0..1" o-- "0..*" Milestone
+Stage "0..1" o-- "0..*" Task
+Risk "1" *-- "0..*" Mitigation : plan d'action >
+Opportunity "0..1" o-- "0..*" Risk
+
+' =====================================================================
+'  Relations — domaine F
+' =====================================================================
+Opportunity "0..1" o-- "0..*" Cost
+Opportunity "0..1" o-- "0..*" Benefit
+Project "0..1" o-- "0..*" Cost
+Project "0..1" o-- "0..*" Benefit
+KPI "0..1" o-- "0..*" Benefit : adossé à >
+KPI "1" *-- "0..*" Measurement : relevés >
+Project "0..1" o-- "0..*" Measurement
+
+' =====================================================================
+'  Relations — domaine G
+' =====================================================================
+Organization "1" *-- "0..*" Document
+Opportunity "0..1" o-- "0..*" Document
+Project "0..1" o-- "0..*" Document
+Document "1" *-- "1..*" Version : historise >
+Document "0..1" o-- "0..*" Approval
+Opportunity "0..1" o-- "0..*" Approval
+Project "0..1" o-- "0..*" Approval
+User "0..1" o-- "0..*" Approval : décide >
+User "1" o-- "0..*" Notification : destinataire >
+Organization "1" o-- "0..*" Notification
+
+note bottom of AuditLog
+  <b>Pas de cle etrangere, volontairement.</b>
+  Une trace doit survivre a la suppression de l'entite
+  qu'elle decrit : si l'opportunite est effacee, la trace
+  de sa suppression doit subsister. L'API n'expose ni
+  UPDATE ni DELETE sur cette table.
+end note
+
+note bottom of AIRecommendation
+  Relation <b>1..1</b> avec Opportunity : la creation d'une
+  opportunite declenche systematiquement la qualification.
+  Il n'existe pas d'opportunite non qualifiee.
+  <i>fired_rules</i>, <i>alternatives</i> et <i>guardrails</i> figent
+  l'explication au moment du calcul.
+end note
+
+note bottom of Permission
+  Les permissions sont <b>globales a la plateforme</b> :
+  seuls les roles, qui les regroupent, portent un
+  organization_id. Deux organisations partagent donc le
+  meme catalogue de 41 permissions mais ont chacune
+  leurs propres roles.
+end note
+
+@enduml

@@ -1,0 +1,293 @@
+@startuml diagramme-cas-utilisation-detaille
+' =====================================================================
+'  Medicacom AOI Transformation — Diagramme de cas d'utilisation general
+'
+'  Acteurs : les 11 roles reels du catalogue backend/app/core/rbac.py.
+'  Cas d'utilisation : fonctionnalites reellement exposees par l'API
+'  et par l'interface. Aucune fonctionnalite inventee.
+'
+'  Rendu :  plantuml -tpng  diagramme-cas-utilisation.puml
+'           plantuml -tsvg  diagramme-cas-utilisation.puml
+'           plantuml -tpdf  diagramme-cas-utilisation.puml
+' =====================================================================
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+
+skinparam actor {
+  BackgroundColor #E6F1EB
+  BorderColor #0F5E44
+  FontColor #16241E
+}
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #157F5C
+  FontColor #16241E
+  ArrowColor #5E6F67
+  StereotypeFontColor #5E6F67
+}
+skinparam package {
+  BackgroundColor #EDF2EF
+  BorderColor #E1E8E4
+  FontColor #0F5E44
+  FontStyle bold
+}
+skinparam note {
+  BackgroundColor #E6F1EB
+  BorderColor #157F5C
+  FontColor #16241E
+}
+
+left to right direction
+title Medicacom AOI Transformation — Diagramme de cas d'utilisation general
+
+' =====================================================================
+'  Acteurs
+' =====================================================================
+actor "Utilisateur authentifie" as Utilisateur
+actor "Administrateur\nMedicacom" as AdminPlateforme
+actor "Administrateur\nentreprise" as AdminEntreprise
+actor "Direction\nGenerale" as Direction
+actor "Responsable de\ndepartement" as Responsable
+actor "Contributeur\nmetier" as Contributeur
+actor "DSI /\nArchitecte SI" as DSI
+actor "Data Office /\nData Engineer" as DataOffice
+actor "AI Lead /\nData Scientist" as AILead
+actor "Finance /\nControle de gestion" as Finance
+actor "PMO /\nChef de projet" as PMO
+actor "Auditeur /\nLecture seule" as Auditeur
+
+' Generalisation : tous les roles sont d'abord des utilisateurs authentifies.
+Utilisateur <|-- AdminPlateforme
+Utilisateur <|-- AdminEntreprise
+Utilisateur <|-- Direction
+Utilisateur <|-- Responsable
+Utilisateur <|-- Contributeur
+Utilisateur <|-- DSI
+Utilisateur <|-- DataOffice
+Utilisateur <|-- AILead
+Utilisateur <|-- Finance
+Utilisateur <|-- PMO
+Utilisateur <|-- Auditeur
+
+' =====================================================================
+'  Systeme
+' =====================================================================
+rectangle "Medicacom AOI Transformation" {
+
+  ' ---------------------------------------------------------------- socle
+  package "Socle — authentification" {
+    usecase "Se connecter" as UC01
+    usecase "Consulter son profil,\nses roles et son perimetre" as UC02
+    usecase "Changer son mot de passe" as UC03
+  }
+
+  ' ---------------------------------------------------- M1 administration
+  package "M1 — Organisation et droits" {
+    usecase "Administrer la plateforme\net les organisations" as UC10
+    usecase "Gerer l'organisation\net ses sites" as UC11
+    usecase "Gerer les departements" as UC12
+    usecase "Gerer les comptes\nutilisateurs" as UC13
+    usecase "Attribuer roles,\ndepartements et sites" as UC14
+    usecase "Gerer les roles\net leurs permissions" as UC15
+  }
+
+  ' ------------------------------------------------------- M2 / M5 diagnostic
+  package "M2 / M5 — Diagnostic et readiness" {
+    usecase "Ouvrir une campagne\nde diagnostic" as UC20
+    usecase "Noter une dimension\net joindre une preuve" as UC21
+    usecase "Calculer le score\nde readiness" as UC22
+    usecase "Identifier les dimensions\nbloquantes" as UC23
+    usecase "Valider la campagne" as UC24
+    usecase "Exporter le diagnostic\n(CSV)" as UC25
+  }
+
+  ' ------------------------------------------------------ M6 referentiel
+  package "M6 — Referentiel AS-IS et croisements" {
+    usecase "Tenir le referentiel\ndes processus" as UC30
+    usecase "Tenir le referentiel\napplicatif" as UC31
+    usecase "Tenir le referentiel\ndes sources de donnees" as UC32
+    usecase "Declarer une dependance\ninterservices" as UC33
+    usecase "Detecter les doublons\nentre opportunites" as UC34
+  }
+
+  ' --------------------------------------------------- M3 / M4 opportunites
+  package "M3 / M4 — Besoins et qualification" {
+    usecase "Repondre au questionnaire\nde besoin" as UC40
+    usecase "Creer une opportunite" as UC41
+    usecase "Qualifier le type\nde solution" as UC42
+    usecase "Consulter la recommandation\net sa justification" as UC43
+    usecase "Amender la recommandation\n(override justifie)" as UC44
+    usecase "Modifier une opportunite" as UC45
+    usecase "Supprimer une opportunite" as UC46
+  }
+
+  ' ------------------------------------------------------- M7 portefeuille
+  package "M7 — Priorisation du portefeuille" {
+    usecase "Consulter le portefeuille\npriorise" as UC50
+    usecase "Ajuster les ponderations\ndes six criteres" as UC51
+    usecase "Recalculer scores,\nrangs et vagues" as UC52
+    usecase "Valider une opportunite" as UC53
+  }
+
+  ' ---------------------------------------------------------- M8 fiche projet
+  package "M8 — Fiche projet" {
+    usecase "Generer la fiche projet" as UC60
+    usecase "Versionner la fiche" as UC61
+    usecase "Rendre la decision\nde comite" as UC62
+    usecase "Exporter la fiche" as UC63
+  }
+
+  ' ------------------------------------------------------------ M9 projets
+  package "M9 — Cycle de vie des projets" {
+    usecase "Creer et piloter\nun projet" as UC70
+    usecase "Gerer jalons\net taches" as UC71
+    usecase "Declarer un risque\net sa mitigation" as UC72
+    usecase "Franchir une gate\nde phase" as UC73
+    usecase "Declarer un incident" as UC74
+  }
+
+  ' ------------------------------------------------------------- M10 valeur
+  package "M10 — Pilotage de la valeur" {
+    usecase "Saisir couts\net benefices" as UC80
+    usecase "Calculer TCO, ROI\net payback" as UC81
+    usecase "Relever la mesure\nd'un indicateur" as UC82
+    usecase "Valider les benefices\nfinanciers" as UC83
+  }
+
+  ' ------------------------------------------------------ M11 tableaux de bord
+  package "M11 — Tableaux de bord" {
+    usecase "Consulter le tableau\nde bord Direction" as UC90
+    usecase "Consulter le tableau\nde bord Departement" as UC91
+  }
+
+  ' ------------------------------------------------------------- M12 audit
+  package "M12 — Gouvernance et audit" {
+    usecase "Journaliser toute\nmodification" as UC95
+    usecase "Consulter le journal\nd'audit" as UC96
+  }
+}
+
+' =====================================================================
+'  Associations acteur -> cas d'utilisation
+' =====================================================================
+
+' -- Socle, commun a tous
+Utilisateur --> UC01
+Utilisateur --> UC02
+Utilisateur --> UC03
+
+' -- Administrateur Medicacom (perimetre plateforme)
+AdminPlateforme --> UC10
+
+' -- Administrateur entreprise (perimetre organisation)
+AdminEntreprise --> UC11
+AdminEntreprise --> UC12
+AdminEntreprise --> UC13
+AdminEntreprise --> UC14
+AdminEntreprise --> UC15
+AdminEntreprise --> UC96
+
+' -- Direction Generale
+Direction --> UC90
+Direction --> UC50
+Direction --> UC51
+Direction --> UC53
+Direction --> UC62
+Direction --> UC73
+Direction --> UC83
+Direction --> UC25
+
+' -- Responsable de departement (perimetre departement)
+Responsable --> UC91
+Responsable --> UC20
+Responsable --> UC21
+Responsable --> UC24
+Responsable --> UC41
+Responsable --> UC45
+Responsable --> UC60
+
+' -- Contributeur metier (perimetre propre)
+Contributeur --> UC40
+Contributeur --> UC41
+Contributeur --> UC21
+Contributeur --> UC43
+
+' -- DSI / Architecte SI
+DSI --> UC30
+DSI --> UC31
+DSI --> UC33
+DSI --> UC21
+DSI --> UC73
+
+' -- Data Office / Data Engineer
+DataOffice --> UC32
+DataOffice --> UC33
+DataOffice --> UC21
+
+' -- AI Lead / Data Scientist
+AILead --> UC42
+AILead --> UC43
+AILead --> UC44
+AILead --> UC73
+
+' -- Finance / Controle de gestion
+Finance --> UC80
+Finance --> UC81
+Finance --> UC82
+Finance --> UC83
+
+' -- PMO / Chef de projet
+PMO --> UC70
+PMO --> UC71
+PMO --> UC72
+PMO --> UC74
+PMO --> UC60
+
+' -- Auditeur (lecture seule stricte)
+Auditeur --> UC96
+Auditeur --> UC50
+Auditeur --> UC43
+
+' =====================================================================
+'  Relations internes entre cas d'utilisation
+' =====================================================================
+UC41 ..> UC42 : <<include>>
+UC45 ..> UC42 : <<include>>
+UC42 ..> UC43 : <<include>>
+UC21 ..> UC22 : <<include>>
+UC22 <.. UC23 : <<extend>>
+UC51 ..> UC52 : <<include>>
+UC80 ..> UC81 : <<include>>
+UC60 <.. UC62 : <<extend>>
+UC60 ..> UC61 : <<include>>
+UC73 ..> UC95 : <<include>>
+UC34 <.. UC33 : <<extend>>
+UC70 ..> UC95 : <<include>>
+
+note as N1
+  <b>UC95 « Journaliser toute modification »</b> n'est declenche
+  par aucun acteur : c'est un cas d'utilisation systeme,
+  inclus automatiquement par toute ecriture significative.
+  L'entree produite est immuable.
+end note
+
+note as N2
+  <b>Sur l'acteur Auditeur.</b> Il ne porte que des permissions
+  de lecture. Toute tentative d'ecriture, sur n'importe quel
+  module, recoit un <b>403</b>. Huit tests le verifient endpoint
+  par endpoint.
+end note
+
+note as N3
+  <b>Sur le perimetre.</b> Les associations ci-dessus disent
+  <i>quelle action</i> un role peut declencher, pas <i>sur quelles
+  donnees</i>. Un responsable de departement ecrit dans ses
+  departements ; hors perimetre il recoit <b>403</b> en ecriture
+  et <b>404</b> en lecture — repondre 403 confirmerait
+  l'existence de la ressource.
+end note
+
+@enduml

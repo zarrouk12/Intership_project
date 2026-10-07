@@ -1,0 +1,624 @@
+% =====================================================================
+%  Chapitre 3 — Réalisation
+% =====================================================================
+\chapter{Réalisation}
+\label{chap:realisation}
+
+\section{Environnement et technologies}
+
+Les versions ci-dessous sont celles qui figurent dans \code{backend/requirements.txt} et
+\code{frontend/package.json}. Lorsqu'une version n'est pas épinglée dans un fichier du
+projet, la mention correspondante l'indique.
+
+\begin{longtable}{@{}L{4.2cm} L{2.9cm} L{7.1cm}@{}}
+\caption{Technologies employées et versions réellement déclarées}
+\label{tab:technos}\\
+\toprule
+\textbf{Technologie} & \textbf{Version} & \textbf{Rôle dans le projet} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\small\itshape suite du tableau~\ref{tab:technos}}\\
+\toprule
+\textbf{Technologie} & \textbf{Version} & \textbf{Rôle} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+
+\multicolumn{3}{@{}l}{\textit{\textbf{Backend}}}\\
+Python      & 3.12.7 & Langage du serveur (version de l'interpréteur utilisé) \\
+FastAPI     & 0.115.6 & Framework web, validation des entrées, OpenAPI \\
+Uvicorn     & 0.34.0 & Serveur ASGI \\
+SQLAlchemy  & 2.0.36 & ORM, style déclaratif typé \\
+Alembic     & 1.14.0 & Migrations de schéma versionnées \\
+psycopg2-binary & 2.9.10 & Pilote PostgreSQL \\
+Pydantic    & 2.10.4 & Schémas d'entrée et de sortie \\
+pydantic-settings & 2.7.0 & Configuration par variables d'environnement \\
+python-jose & 3.3.0 & Signature et vérification des jetons JWT \\
+passlib     & 1.7.4 & Interface de hachage \\
+bcrypt      & 4.0.1 & Algorithme de hachage des mots de passe \\
+email-validator & 2.2.0 & Validation des adresses électroniques \\
+python-multipart & 0.0.20 & Formulaire du flux OAuth2 \\
+pytest      & 8.3.4 & Exécution des tests \\
+httpx       & 0.28.1 & Client HTTP de test \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{\textbf{Frontend}}}\\
+Node.js     & 24.12.0 & Environnement d'exécution (version utilisée) \\
+npm         & 11.6.2 & Gestionnaire de paquets \\
+React       & 18.3 & Bibliothèque d'interface \\
+TypeScript  & 5.7 & Typage statique \\
+Vite        & 6.0 & Serveur de développement et empaqueteur \\
+React Router & 6.28 & Routage côté client \\
+TanStack Query & 5.62 & Cache et synchronisation des données serveur \\
+Recharts    & 2.13 & Graphiques \\
+axios       & 1.7 & Client HTTP \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{\textbf{Infrastructure}}}\\
+PostgreSQL  & 16-alpine (Docker) & Base déclarée dans \code{docker-compose.yml} \\
+PostgreSQL  & 12.4 (local) & Instance effectivement utilisée en développement \\
+Docker Compose & non versionné & Orchestration des trois services \\
+\end{longtable}
+
+\begin{remarque}[Lecture des versions du frontend]
+Les dépendances JavaScript sont déclarées avec l'opérateur \code{\textasciicircum{}},
+qui autorise les montées de version mineures. Le tableau retient la version minimale
+déclarée. La version exactement installée figure dans \code{package-lock.json}.
+\end{remarque}
+
+\section{Organisation du code}
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{0.92\textwidth}
+\small\ttfamily\raggedright
+\textcolor{medicaDeep}{backend/app/}\\
+\hspace*{1em}core/ \hfill \textcolor{medicaMuted}{\rmfamily config, security (JWT, bcrypt), rbac (catalogue)}\\
+\hspace*{1em}db/ \hfill \textcolor{medicaMuted}{\rmfamily session, base déclarative, seed}\\
+\hspace*{1em}models/ \hfill \textcolor{medicaMuted}{\rmfamily 34 tables réparties en 7 modules}\\
+\hspace*{1em}schemas/ \hfill \textcolor{medicaMuted}{\rmfamily schémas Pydantic d'entrée et de sortie}\\
+\hspace*{1em}services/ \hfill \textcolor{medicaMuted}{\rmfamily 7 services métier, sans dépendance HTTP}\\
+\hspace*{1em}api/deps.py \hfill \textcolor{medicaMuted}{\rmfamily session, utilisateur, permission, périmètre}\\
+\hspace*{1em}api/routers/ \hfill \textcolor{medicaMuted}{\rmfamily 10 routers, 99 endpoints}\\
+\hspace*{1em}main.py \hfill \textcolor{medicaMuted}{\rmfamily application, CORS, montage des routers}\\[4pt]
+\textcolor{medicaDeep}{backend/alembic/versions/} \hfill \textcolor{medicaMuted}{\rmfamily 3 migrations}\\
+\textcolor{medicaDeep}{backend/tests/} \hfill \textcolor{medicaMuted}{\rmfamily 7 fichiers, 112 tests}\\[6pt]
+\textcolor{medicaDeep}{frontend/src/}\\
+\hspace*{1em}lib/ \hfill \textcolor{medicaMuted}{\rmfamily client axios, contexte d'authentification, hooks}\\
+\hspace*{1em}components/ \hfill \textcolor{medicaMuted}{\rmfamily mise en page, graphiques, panneaux, icônes}\\
+\hspace*{1em}pages/ \hfill \textcolor{medicaMuted}{\rmfamily un composant par écran}\\
+\hspace*{1em}styles.css \hfill \textcolor{medicaMuted}{\rmfamily charte graphique, variables CSS}
+\end{minipage}
+\caption{Arborescence des répertoires significatifs}
+\label{fig:arborescence}
+\end{figure}
+
+La règle d'organisation du backend est simple : un router ne calcule rien. Il vérifie
+les droits, charge les entités, délègue à un service, journalise et renvoie. Toute
+formule est dans \code{services/}.
+
+% =====================================================================
+\section{L'intelligence de la plateforme : un moteur de règles, pas un modèle}
+\label{sec:pas-dia}
+
+Cette section est la plus importante du rapport en matière d'honnêteté technique. Le
+produit s'appelle \emph{AOI Transformation}, une table de la base s'appelle
+\code{ai\_recommendation}, et la plateforme recommande des types de solutions
+d'intelligence artificielle. Rien de tout cela n'implique qu'elle en contienne une.
+
+\subsection{Le constat, établi sur le code}
+
+Une recherche exhaustive a été menée sur l'ensemble du dépôt, portant sur les
+bibliothèques d'apprentissage automatique (\code{scikit-learn}, \code{tensorflow},
+\code{torch}, \code{transformers}, \code{keras}, \code{xgboost}, \code{pandas},
+\code{numpy}), sur les clients de fournisseurs de modèles (\code{openai},
+\code{anthropic}, \code{mistralai}, \code{cohere}, \code{huggingface}), ainsi que sur
+tout appel réseau sortant du backend. Le résultat est sans ambiguïté :
+
+\begin{itemize}
+  \item aucune de ces bibliothèques n'apparaît dans \code{requirements.txt} ni dans
+    \code{package.json} ;
+  \item aucun import correspondant n'existe dans le code ;
+  \item aucun fichier de modèle entraîné (\code{.pkl}, \code{.h5}, \code{.onnx},
+    \code{.pt}) n'est présent dans le dépôt ;
+  \item aucune clé d'API de fournisseur de modèle n'est attendue par la configuration ;
+  \item le backend n'émet aucune requête HTTP sortante. Le seul client HTTP installé,
+    \code{httpx}, sert exclusivement aux tests.
+\end{itemize}
+
+Les deux seules occurrences du sigle « LLM » dans le code sont des chaînes de caractères
+en français, décrivant le \emph{patron de solution} recommandé à l'utilisateur —
+« Assistant LLM ancré sur base documentaire (RAG), sortie validée ». Ce sont des
+recommandations adressées à un humain, pas des appels à un modèle.
+
+\begin{remarque}[Formulation exacte à retenir]
+La plateforme \emph{recommande} des solutions d'intelligence artificielle. Elle n'en
+\emph{utilise} aucune. Son moteur de qualification est un système à base de règles
+pondérées, entièrement déterministe, dont chaque sortie est reconstituable à la main.
+\end{remarque}
+
+\subsection{Moteur de règles et apprentissage automatique : la distinction}
+
+La confusion entre les deux est fréquente, y compris dans la littérature commerciale.
+Elle porte sur l'origine de la connaissance.
+
+\begin{table}[H]
+\centering
+\caption{Ce qui sépare un moteur de règles d'un modèle d'apprentissage}
+\label{tab:regles-vs-ml}
+\small
+\begin{tabular}{@{}L{3.3cm} L{5.3cm} L{5.3cm}@{}}
+\toprule
+& \textbf{Moteur de règles (ce projet)} & \textbf{Apprentissage automatique} \\
+\midrule
+Origine de la connaissance
+& Écrite par un expert humain, lisible dans le code
+& Inférée statistiquement depuis des données d'entraînement \\
+Forme
+& Prédicats booléens pondérés
+& Paramètres numériques appris, souvent des millions \\
+Besoin en données
+& Aucun jeu d'entraînement
+& Corpus annoté, représentatif et volumineux \\
+Déterminisme
+& Deux exécutions sur les mêmes faits donnent le même résultat
+& Résultat dépendant de l'entraînement et du tirage \\
+Explicabilité
+& Native : la règle qui a décidé est nommée
+& À reconstruire après coup (importance des variables, SHAP, LIME) \\
+Évolution
+& Modifier une règle, une ligne de code, relire la revue
+& Réentraîner, réévaluer, surveiller la dérive \\
+Validation réglementaire
+& Le jeu de règles est un document versionnable et signable
+& Exige un dossier de validation et des jeux de test figés \\
+Limite principale
+& Ne découvre rien qu'un expert n'ait prévu
+& Capte des régularités qu'aucun expert n'aurait formulées \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Le moteur de ce projet relève de la première colonne. On peut le qualifier de système
+expert au sens classique : une base de connaissances — 39~règles réparties sur 8~types
+de solution — et un mécanisme d'inférence — l'agrégation pondérée et l'application des
+règles bloquantes.
+
+\subsection{Pourquoi ce choix est adapté ici}
+
+Ce n'est pas un pis-aller. Quatre arguments le soutiennent.
+
+\textbf{Il n'y a pas de données d'entraînement.} Entraîner un modèle à prédire
+« quel type de solution convient à ce besoin » supposerait un historique de plusieurs
+centaines de besoins qualifiés puis validés par leur résultat réel. Aucune organisation
+ne dispose de ce corpus au moment où elle démarre sa démarche d'adoption. Le problème
+est, par construction, un problème de démarrage à froid.
+
+\textbf{La décision doit être opposable.} La recommandation est présentée en comité
+d'investissement. Un expert du domaine doit pouvoir contester une règle précise. Avec
+un modèle statistique, la discussion se déplace vers la qualité du jeu d'entraînement,
+terrain sur lequel un comité métier ne peut pas arbitrer.
+
+\textbf{Le contexte réglementaire pénalise l'opacité.} En périmètre GxP, une décision
+non explicable est une décision à documenter lourdement. Un jeu de règles versionné est
+un artefact de validation naturel.
+
+\textbf{Le déterminisme rend le système testable.} Les règles sont couvertes par des
+tests qui vérifient des sorties exactes. Un modèle probabiliste ne se teste pas ainsi ;
+il se mesure sur des métriques agrégées.
+
+\subsection{Ce que cela implique, et l'évolution envisageable}
+
+La contrepartie est réelle : le moteur ne découvre rien. Il ne peut pas proposer un type
+de solution auquel les règles n'ont pas pensé, ni apprendre des décisions passées. Si
+tous les comités écartent systématiquement les recommandations « agentique », le moteur
+continuera à les produire.
+
+L'intégration d'un modèle de langage est envisageable et serait utile sur trois points
+précis : pré-remplir les faits de qualification à partir d'une description libre du
+besoin, rédiger un premier jet de fiche projet, et détecter des doublons sémantiques
+entre opportunités formulées différemment. Ces trois usages sont décrits au
+chapitre~\ref{chap:conclusion} comme \emph{perspectives}. Aucun n'est implémenté, et
+aucun ne devrait remplacer la décision du moteur de règles : le modèle proposerait des
+entrées, les règles continueraient de décider.
+
+% =====================================================================
+\section{Le moteur de qualification (M4)}
+
+\subsection{Principe}
+
+Le moteur compare une opportunité à huit types de solution. Il ne choisit pas « le plus
+probable » ; il évalue chaque type indépendamment, puis retient celui dont le plus grand
+poids de règles est satisfait.
+
+Les huit types sont : IA classique (apprentissage supervisé, séries temporelles), vision
+par ordinateur, traitement du langage, IA générative, IA agentique, décisionnel,
+automatisation robotisée de processus, et refonte de processus. Ce dernier mérite d'être
+souligné : c'est la réponse « pas d'IA », et le moteur la produit lorsque le processus
+est instable ou les données absentes.
+
+\subsection{Les faits d'entrée}
+
+Quinze faits sont extraits de l'opportunité. Treize sont booléens
+(\code{data\_available}, \code{data\_structured}, \code{ground\_truth\_available},
+\code{unstructured\_text}, \code{image\_or\_video}, \code{content\_generation},
+\code{multi\_step\_autonomy}, \code{rule\_based}, \code{repetitive\_task},
+\code{reporting\_need}, \code{process\_unstable}, \code{regulated\_gxp},
+\code{human\_in\_the\_loop}), deux sont numériques (\code{data\_quality} sur~5 et
+\code{volume\_per\_month}). Les réponses libres du questionnaire peuvent surcharger un
+fait, ce qui permet d'affiner sans modifier le schéma.
+
+\subsection{Le calcul}
+
+Soit $R_t$ l'ensemble des règles du type~$t$, $w_r$ le poids de la règle~$r$ et
+$\sigma_r \in \{0,1\}$ l'indicateur de satisfaction. Le score brut du type vaut :
+
+\begin{equation}
+s_t = \frac{\displaystyle\sum_{r \in R_t} w_r \, \sigma_r}{\displaystyle\sum_{r \in R_t} w_r}
+\label{eq:score-type}
+\end{equation}
+
+Une règle peut être déclarée \emph{bloquante}. Si une règle bloquante n'est pas
+satisfaite, le type est disqualifié et son score divisé par quatre :
+
+\begin{equation}
+s_t^{\,\text{final}} =
+\begin{cases}
+s_t & \text{si toutes les règles bloquantes de } t \text{ sont satisfaites,}\\[6pt]
+0{,}25 \times s_t & \text{sinon.}
+\end{cases}
+\label{eq:disqualification}
+\end{equation}
+
+Le choix de diviser plutôt que d'annuler est délibéré. Un type disqualifié reste visible
+dans les alternatives avec son score pénalisé et le motif de sa disqualification. Une
+opportunité de vision par ordinateur sans images annotées apparaît donc comme
+« pertinente mais bloquée sur la vérité terrain », information bien plus utile qu'une
+absence.
+
+Le type retenu est celui de score final maximal ; en cas d'égalité, l'ordre alphabétique
+du code technique départage, ce qui garantit un résultat reproductible. Les trois
+suivants sont renvoyés comme alternatives.
+
+\subsection{Enchaînement}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=0.55cm, scale=0.95, transform shape]
+  \node[bloc, text width=4.6cm, fill=medicaSoft, draw=medicaGreen] (opp)
+    {Opportunité\\\scriptsize 15 faits de qualification};
+  \node[bloc, below=of opp, text width=4.6cm] (facts)
+    {Extraction des faits\\\scriptsize surcharge par le questionnaire};
+  \node[bloc, below=of facts, text width=6.2cm, draw=medicaTeal] (loop)
+    {Pour chacun des 8 types :\\\scriptsize évaluer les règles, cumuler les poids satisfaits};
+  \node[bloc, below=of loop, text width=6.2cm] (bloq)
+    {Règle bloquante non satisfaite ?\\\scriptsize si oui : score $\times$ 0,25 et motif conservé};
+  \node[bloc, below=of bloq, text width=6.2cm] (tri)
+    {Tri décroissant des 8 scores};
+  \node[blocvert, below=of tri, text width=7cm] (out)
+    {\textbf{Recommandation}\\\scriptsize type retenu · confiance · justification rédigée\\
+     \scriptsize règles satisfaites et manquées · 3 alternatives · garde-fous};
+  \node[bloc, right=1.2cm of out, text width=3cm, draw=medicaAmber, fill=medicaBg, font=\scriptsize]
+    (gxp) {Si \code{regulated\_gxp} : 3 garde-fous GxP ajoutés en tête};
+
+  \draw[flechevert] (opp) -- (facts);
+  \draw[flechevert] (facts) -- (loop);
+  \draw[flechevert] (loop) -- (bloq);
+  \draw[flechevert] (bloq) -- (tri);
+  \draw[flechevert] (tri) -- (out);
+  \draw[fleche, dashed, draw=medicaAmber] (gxp) -- (out);
+\end{tikzpicture}
+\caption{Enchaînement du moteur de qualification}
+\label{fig:moteur-qualification}
+\end{figure}
+
+\subsection{Le cœur de l'algorithme}
+
+\begin{lstlisting}[language=Python, caption={Évaluation d'un type de solution, extrait de services/recommendation.py}, label={lst:evaluate}]
+def evaluate_type(ai_type, facts):
+    rules = RULES[ai_type]
+    total_weight = sum(r.weight for r in rules)
+    fired_weight = 0.0
+    disqualified_by = None
+
+    for rule in rules:
+        satisfied = bool(rule.predicate(facts))
+        if satisfied:
+            fired_weight += rule.weight
+            fired.append(...)          # trace conservee pour l'explication
+        else:
+            missed.append(...)
+            if rule.blocking and disqualified_by is None:
+                disqualified_by = rule.label
+
+    score = fired_weight / total_weight
+    if disqualified_by:
+        score *= 0.25                  # le type reste visible, fortement penalise
+    return TypeEvaluation(ai_type, score, fired, missed, disqualified_by)
+\end{lstlisting}
+
+L'élément notable n'est pas le calcul, qui tient en dix lignes, mais le fait que les
+listes \code{fired} et \code{missed} soient conservées. C'est ce qui permet à l'API de
+répondre « voici pourquoi » et non seulement « voici quoi ». Ces listes sont persistées
+en JSON dans \code{ai\_recommendation.fired\_rules}, ce qui rend la recommandation
+reconstituable des mois plus tard, même si les règles ont changé entre-temps.
+
+\subsection{Illustration}
+
+Une opportunité d'inspection visuelle de blisters déclare des images disponibles et
+annotées, une tâche répétitive, un volume mensuel de plusieurs milliers d'unités et un
+périmètre GxP. Les cinq règles du type \emph{vision par ordinateur} sont satisfaites, le
+score vaut 1,00. Le type \emph{IA classique} est disqualifié par la règle CLS-2, les
+données n'étant pas structurées ; il figure en alternative avec un score divisé par
+quatre et le motif « Données structurées (ERP, MES, LIMS) ». Le périmètre GxP ajoute en
+tête des garde-fous la validation informatique, la traçabilité ALCOA+ et la revue
+humaine obligatoire.
+
+% =====================================================================
+\section{L'algorithme de readiness (M5)}
+
+\subsection{Formules}
+
+Chaque dimension du diagnostic porte une note $n_i \in [0,5]$, un poids $p_i$ et une
+confiance $c_i \in [0,1]$ déclarée par le répondant. Le score global est :
+
+\begin{equation}
+\text{readiness} = 100 \times
+\frac{\displaystyle\sum_{i} n_i \, p_i \, c_i}{\displaystyle\sum_{i} 5 \, p_i \, c_i}
+\label{eq:readiness}
+\end{equation}
+
+La confiance apparaît au numérateur \emph{et} au dénominateur. Une réponse mal étayée
+pèse donc moins dans les deux termes : elle ne fait ni monter ni descendre
+artificiellement le score, elle s'efface.
+
+La moyenne d'un axe — technique ou métier — n'utilise que le poids :
+
+\begin{equation}
+\bar{n}_{\text{axe}} =
+\frac{\displaystyle\sum_{i \in \text{axe}} n_i \, p_i}{\displaystyle\sum_{i \in \text{axe}} p_i}
+\label{eq:moyenne-axe}
+\end{equation}
+
+La différence de traitement est intentionnelle. Le score global mesure une maturité
+\emph{consolidée}, pour laquelle la solidité du constat compte. La moyenne d'axe décrit
+le niveau constaté, indépendamment de la qualité de l'instruction.
+
+\subsection{Dimensions non instruites}
+
+Une confiance nulle signale une dimension non encore évaluée. Elle n'apporte ni au
+numérateur ni au dénominateur — une dimension non mesurée ne vaut pas zéro — et elle
+pèse uniquement sur le taux de complétion :
+
+\begin{equation}
+\text{complétion} = 100 \times
+\frac{\text{dimensions instruites}}{\text{dimensions du référentiel}}
+\end{equation}
+
+Ce taux est toujours calculé, jamais saisi. La conséquence pratique est importante :
+ajouter une dimension au référentiel fait baisser le taux de complétion de toutes les
+campagnes, ce qui est exact, sans faire baisser mécaniquement leur score, ce qui serait
+faux.
+
+\subsection{Dimensions bloquantes et points de vigilance}
+
+Une dimension instruite dont la note passe sous le seuil de la campagne — 2,5 par
+défaut — est signalée. Sa qualification dépend de son caractère critique :
+
+\begin{equation}
+\text{bloquante} \iff (n_i < \theta) \wedge \text{critique}_i
+\qquad
+\text{vigilance} \iff (n_i < \theta) \wedge \neg\,\text{critique}_i
+\end{equation}
+
+Une dimension bloquante interdit le passage en production tant qu'elle n'est pas
+remédiée. Un point de vigilance relève du plan de conduite du changement. Le niveau de
+maturité affiché est $\lfloor \text{readiness} / 20 \rfloor$, plafonné à~5, sur une
+échelle allant de « Inexistant » à « Optimisé ».
+
+% =====================================================================
+\section{La priorisation du portefeuille (M7)}
+
+\subsection{Le score de priorité}
+
+Six critères notés sur 100 sont combinés, puis une pénalité de risque est retranchée :
+
+\begin{equation}
+\text{score} = \sum_{k \in K} \omega_k \, v_k \; - \; \pi
+\qquad\text{avec}\qquad
+\sum_{k \in K} \omega_k = 1
+\label{eq:priorite}
+\end{equation}
+
+Les pondérations par défaut sont données au tableau~\ref{tab:poids}.
+
+\begin{table}[H]
+\centering
+\caption{Pondérations par défaut des six critères de priorisation}
+\label{tab:poids}
+\small
+\begin{tabular}{@{}L{5cm} C{2cm} L{6.4cm}@{}}
+\toprule
+\textbf{Critère} & \textbf{Poids} & \textbf{Ce qu'il mesure} \\
+\midrule
+Impact métier             & 0,25 & Gain opérationnel attendu sur le processus \\
+Impact financier / P\&L   & 0,20 & Effet sur le compte de résultat \\
+Faisabilité technique     & 0,20 & Disponibilité des données et des compétences \\
+Alignement stratégique    & 0,15 & Cohérence avec les priorités de l'organisation \\
+Readiness organisationnel & 0,10 & Maturité du département porteur \\
+Synergies                 & 0,10 & Réutilisation d'actifs partagés \\
+\midrule
+\textbf{Total}            & \textbf{1,00} & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Ces poids sont ajustables depuis l'interface. Toute pondération fournie est renormalisée
+à~1 avant usage, ce qui garantit que les scores restent comparables quelle que soit la
+saisie. Un utilisateur qui porte l'impact financier de 0,20 à 0,60 sans toucher au reste
+obtient bien une grille valide, dont les autres poids ont été proportionnellement
+réduits.
+
+\subsection{La pénalité de risque}
+
+Le risque brut est le produit de la probabilité et de l'impact, tous deux notés de 1
+à~5, soit une valeur de 1 à~25. Cette valeur est ramenée à l'échelle du score :
+
+\begin{equation}
+\pi = \frac{P \times I}{25} \times \Pi_{\max},
+\qquad \Pi_{\max} = 15
+\label{eq:penalite}
+\end{equation}
+
+Une opportunité au risque maximal perd donc 15~points sur 100. Le plafond est un choix
+d'étalonnage : assez élevé pour déclasser une opportunité risquée, assez bas pour qu'un
+risque maîtrisable n'annule pas un impact fort. Le score final est borné dans $[0,100]$.
+
+\subsection{Rangs, vagues et quadrants}
+
+Les opportunités sont triées par score décroissant, l'identifiant départageant les
+égalités. Le rang est la position dans ce classement ; la vague est
+$\lfloor (\text{rang}-1) / 6 \rfloor + 1$, la taille de vague étant paramétrable. Ce
+découpage donne une lecture de séquencement plutôt qu'un simple palmarès : la vague~1
+est ce que l'organisation lance maintenant, la vague~2 ce qu'elle prépare.
+
+La matrice de portefeuille croise impact métier et faisabilité autour d'un seuil de~50,
+définissant quatre quadrants : \emph{prioritaire} (fort impact, faisable),
+\emph{quick win} (impact modéré, faisable), \emph{à réfléchir} (fort impact, difficile)
+et \emph{à écarter}. La taille du point représente le bénéfice annuel attendu.
+
+% =====================================================================
+\section{Le pilotage de la valeur (M10)}
+
+\subsection{Coût total de possession}
+
+Les coûts sont séparés en non récurrents et récurrents. Sur un horizon de $H$ années :
+
+\begin{equation}
+\text{TCO} = \underbrace{\sum_{c \,\in\, \text{non récurrents}} m_c}_{\text{CAPEX}}
+\; + \;
+\underbrace{\Big(\sum_{c \,\in\, \text{récurrents}} m_c\Big)}_{\text{OPEX annuel}} \times H
+\label{eq:tco}
+\end{equation}
+
+\subsection{Gains et retour sur investissement}
+
+Chaque bénéfice porte un montant annuel et un taux de réalisation, qui traduit la
+prudence de l'hypothèse. Le gain annuel retenu est pondéré par ce taux :
+
+\begin{equation}
+G = \sum_{b} m_b \, \rho_b
+\qquad\text{puis}\qquad
+\text{ROI}\,(\%) = \frac{G \times H - \text{TCO}}{\text{TCO}} \times 100
+\label{eq:roi}
+\end{equation}
+
+\subsection{Délai de retour}
+
+\begin{equation}
+\text{payback (mois)} = \frac{\text{CAPEX}}{\big(G - \text{OPEX annuel}\big) / 12}
+\label{eq:payback}
+\end{equation}
+
+Le numérateur est le seul CAPEX, pas le TCO. Le payback répond à la question « en
+combien de mois l'investissement initial est-il récupéré par le gain annuel net
+d'exploitation ? ». Y faire figurer trois années d'OPEX qui ne sont pas encore engagées
+allongerait artificiellement le délai. Le calcul n'est produit que si le gain net annuel
+et le CAPEX sont strictement positifs ; sinon le délai est déclaré non calculable plutôt
+qu'affiché à zéro.
+
+\subsection{Valeur promise et valeur réalisée}
+
+Les bénéfices sont rattachés à des indicateurs, dont les mesures successives sont
+horodatées. Le taux d'atteinte d'un indicateur est
+$(\text{courant} - \text{référence}) / (\text{cible} - \text{référence}) \times 100$,
+borné à 150~\% pour absorber les dépassements sans fausser les agrégats. C'est cette
+comparaison qui ferme la boucle du parcours : le business case cesse d'être un document
+d'obtention de budget pour devenir un engagement suivi.
+
+% =====================================================================
+\section{Sécurité et isolation}
+
+\subsection{Chaîne de contrôle d'une requête}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=0.5cm, scale=0.95, transform shape]
+  \node[bloc, text width=6cm, fill=medicaSoft, draw=medicaGreen] (req)
+    {Requête HTTP\\\scriptsize en-tête \code{Authorization: Bearer}};
+  \node[bloc, below=of req, text width=6cm, draw=medicaTeal] (jwt)
+    {Vérification du jeton\\\scriptsize signature HS256, expiration};
+  \node[bloc, below=of jwt, text width=6cm, draw=medicaTeal] (user)
+    {Chargement de l'utilisateur\\\scriptsize compte actif ? sinon 401};
+  \node[bloc, below=of user, text width=6cm, draw=medicaTeal] (perm)
+    {Permission requise par l'endpoint\\\scriptsize absente $\rightarrow$ \textbf{403}};
+  \node[bloc, below=of perm, text width=6cm, draw=medicaTeal] (tenant)
+    {Filtre \code{organization\_id} issu du jeton\\\scriptsize jamais de la requête};
+  \node[bloc, below=of tenant, text width=6cm, draw=medicaTeal] (scope)
+    {Périmètre de l'utilisateur\\\scriptsize lecture hors périmètre $\rightarrow$ \textbf{404}\\
+     \scriptsize écriture hors périmètre $\rightarrow$ \textbf{403}};
+  \node[blocvert, below=of scope, text width=6cm] (exec)
+    {Exécution et journalisation\\\scriptsize entrée \code{audit\_log} si écriture};
+
+  \foreach \a/\b in {req/jwt, jwt/user, user/perm, perm/tenant, tenant/scope, scope/exec}
+    \draw[flechevert] (\a) -- (\b);
+
+  \node[bloc, right=1.2cm of perm, text width=3.1cm, fill=medicaBg, draw=medicaRed, font=\scriptsize]
+    (refus) {Refus\\ 401 · 403 · 404\\ aucune donnée renvoyée};
+  \draw[fleche, draw=medicaRed] (perm.east) -- (refus.west);
+  \draw[fleche, draw=medicaRed] (scope.east) -| (refus.south);
+  \draw[fleche, draw=medicaRed] (jwt.east) -| (refus.north);
+\end{tikzpicture}
+\caption{Contrôles traversés par toute requête authentifiée}
+\label{fig:securite}
+\end{figure}
+
+\subsection{Authentification}
+
+Les mots de passe sont hachés avec bcrypt ; aucun mot de passe en clair n'est stocké ni
+journalisé. La connexion émet un jeton JWT signé en HS256, dont la charge utile contient
+l'identifiant de l'utilisateur, celui de son organisation, son rôle principal, la date
+d'émission et la date d'expiration. La durée de validité par défaut est de 720~minutes.
+
+Deux points de configuration méritent attention avant une mise en production : la clé de
+signature porte une valeur par défaut explicitement nommée
+\code{dev-secret-key-change-me}, et le compte superutilisateur initial a un mot de passe
+par défaut. Les deux doivent être redéfinis par variable d'environnement.
+
+\subsection{Autorisation}
+
+L'autorisation repose sur deux dépendances FastAPI centrales.
+\code{require\_permission} vérifie qu'un utilisateur détient une permission et lève 403
+sinon. \code{get\_scoped\_or\_404} charge une entité en appliquant simultanément le
+filtre de tenant et le filtre de périmètre.
+
+Le choix des codes de retour est délibéré. Une lecture hors périmètre répond~404, non
+403 : répondre 403 confirmerait l'existence de la ressource, ce qui constitue déjà une
+fuite d'information. Une écriture hors périmètre répond 403, car l'utilisateur voit
+l'objet mais n'a pas le droit d'agir dessus.
+
+\begin{remarque}[Le frontend ne protège rien]
+Le masquage d'un bouton dans l'interface n'est pas un contrôle d'accès. Il améliore
+l'ergonomie en n'affichant que les actions possibles. La protection réelle est
+exclusivement côté serveur. Les tests d'autorisation appellent les endpoints
+directement, sans passer par l'interface, précisément pour vérifier ce point.
+\end{remarque}
+
+\subsection{Isolation entre organisations}
+
+L'identifiant d'organisation est lu dans le jeton, jamais dans le corps ou les
+paramètres de la requête. Un utilisateur ne peut donc pas se déclarer membre d'une autre
+organisation, même en forgeant sa requête, sans forger le jeton, ce qui exigerait la clé
+de signature.
+
+La permission \code{platform.admin} est la seule à franchir cette frontière. Elle ne
+peut pas être placée par un administrateur d'entreprise dans un rôle qu'il crée : une
+vérification explicite l'en empêche.
+
+\subsection{Traçabilité}
+
+Toute écriture significative produit une entrée dans \code{audit\_log}, conservant
+l'auteur, son adresse électronique au moment de l'action, l'horodatage, le type et
+l'identifiant de l'entité, un libellé lisible, l'ancienne et la nouvelle valeur en JSON,
+et l'adresse IP. L'API n'expose aucune mise à jour ni suppression sur cette table : le
+journal est en insertion seule. L'adresse électronique est dupliquée dans l'entrée
+précisément pour que la trace reste lisible si le compte est supprimé par la suite.

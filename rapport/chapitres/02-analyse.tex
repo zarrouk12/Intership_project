@@ -1,0 +1,278 @@
+% =====================================================================
+%  Chapitre 1 — Étude et analyse des besoins
+% =====================================================================
+\chapter{Étude et analyse des besoins}
+\label{chap:analyse}
+
+\section{Contexte du projet}
+
+Le projet se déroule chez \varEntreprise, laboratoire pharmaceutique dont le jeu de
+données de démonstration reflète l'organisation : quatre implantations — un site de
+production à Tunis, un centre de R\&D à Lyon, une plateforme de distribution à
+Casablanca et un siège à Paris — et huit départements, du Commercial aux Affaires
+réglementaires.
+
+Cette dispersion géographique et fonctionnelle est précisément ce qui rend
+l'arbitrage difficile. Un besoin de prévision des ventes exprimé par le Commercial de
+Tunis et un besoin de prévision de la demande formulé par la Supply Chain de
+Casablanca reposent sur le même référentiel produit, mais rien ne le signale tant que
+les deux dossiers vivent dans des tableurs distincts.
+
+\section{Présentation de \appname}
+
+\appname{} est une plateforme de pilotage de portefeuille, destinée à la direction, aux
+responsables de département et aux fonctions transverses d'un laboratoire. Elle n'est
+pas un outil de développement de modèles : elle intervient \emph{avant} le projet
+technique, pour décider s'il doit exister, et \emph{après} sa mise en production, pour
+vérifier qu'il tient ses promesses.
+
+La plateforme est multi-entreprises. Chaque organisation cliente dispose de ses sites,
+départements, utilisateurs, rôles et données métier, sans aucune visibilité sur les
+autres.
+
+\section{Problématique}
+
+La question à laquelle le projet répond peut s'énoncer ainsi :
+
+\begin{remarque}[Problématique]
+Comment doter une organisation pharmaceutique d'un cadre unique et traçable qui
+transforme des idées d'intelligence artificielle dispersées en un portefeuille de
+projets arbitrés, gouvernés et dont la valeur est mesurée, tout en respectant les
+exigences d'explicabilité et de conformité propres au secteur ?
+\end{remarque}
+
+Trois sous-questions en découlent :
+
+\begin{enumerate}
+  \item Comment qualifier objectivement le type de solution adapté à un besoin, sans
+    céder à l'effet de mode qui pousse à répondre « IA » à toute question ?
+  \item Comment comparer des opportunités issues de départements différents sur une
+    grille commune, tout en laissant les pondérations ajustables selon la stratégie du
+    moment ?
+  \item Comment garantir qu'une décision prise il y a six mois reste justifiable devant
+    un comité ou un inspecteur ?
+\end{enumerate}
+
+\section{Objectifs généraux}
+
+\begin{enumerate}
+  \item Centraliser le diagnostic de maturité, l'expression des besoins et le
+    portefeuille de projets dans un référentiel unique.
+  \item Produire des décisions explicables : toute note, tout score et toute
+    recommandation doivent pouvoir être décomposés.
+  \item Garantir l'étanchéité entre organisations clientes et le cloisonnement des
+    droits à l'intérieur de chacune.
+  \item Mesurer la valeur réellement captée et la confronter à la valeur promise.
+\end{enumerate}
+
+\section{Objectifs spécifiques}
+
+\begin{itemize}
+  \item Évaluer la maturité sur deux axes, technique et métier, avec pondération et
+    niveau de confiance par dimension.
+  \item Identifier les dimensions bloquantes, c'est-à-dire celles qui interdisent un
+    passage en production tant qu'elles ne sont pas remédiées.
+  \item Qualifier chaque opportunité parmi huit types de solution, avec justification
+    écrite, alternatives écartées et garde-fous.
+  \item Calculer un score de priorité sur six critères pondérables, diminué d'une
+    pénalité de risque.
+  \item Détecter les doublons et les synergies entre opportunités de départements
+    différents.
+  \item Générer une fiche projet versionnée et soumise à décision de comité.
+  \item Suivre le cycle de vie par phases avec gates de passage.
+  \item Calculer TCO, gains annuels, ROI et délai de retour, au projet et au
+    portefeuille.
+  \item Journaliser toute modification significative de façon immuable.
+\end{itemize}
+
+\section{Besoins fonctionnels}
+
+Les besoins fonctionnels se regroupent en douze modules, notés M1 à M12. Le
+tableau~\ref{tab:modules} en donne l'état réel dans l'application livrée. Cet état a
+été établi en inspectant le code : routers FastAPI, services métier, écrans React et
+suite de tests.
+
+\begin{longtable}{@{}L{1.1cm} L{6.6cm} L{2.6cm} L{4.2cm}@{}}
+\caption{État d'implémentation des douze modules fonctionnels}
+\label{tab:modules}\\
+\toprule
+\textbf{Mod.} & \textbf{Description} & \textbf{État} & \textbf{Constat dans le code} \\
+\midrule
+\endfirsthead
+\multicolumn{4}{c}{\small\itshape suite du tableau~\ref{tab:modules}}\\
+\toprule
+\textbf{Mod.} & \textbf{Description} & \textbf{État} & \textbf{Constat dans le code} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+
+M1 & Organisation, sites, départements, utilisateurs, rôles et permissions
+   & \fait
+   & 18 endpoints sous \code{/org}, 41 permissions, 11 rôles, écran Administration à
+     trois onglets \\
+
+M2 & Diagnostic AS-IS inspiré de TOGAF : campagnes et réponses pondérées
+   & \fait
+   & 8 endpoints \code{/diagnostic}, questionnaire éditable dans l'interface \\
+
+M3 & Expression des besoins : questionnaire commun et volet départemental
+   & \fait
+   & \code{services/questionnaire.py}, 5 sections communes et 7 volets métier \\
+
+M4 & Qualification du type de solution
+   & \fait
+   & \code{services/recommendation.py}, 8 types, 39 règles pondérées \\
+
+M5 & Readiness : score sur 100, dimensions bloquantes
+   & \fait
+   & \code{services/readiness.py}, distinction bloquante / vigilance / à instruire \\
+
+M6 & Croisements interservices : processus, applications, données, dépendances,
+     doublons
+   & \fait
+   & 14 endpoints \code{/crossings}, écran Architecture \& données \\
+
+M7 & Priorisation du portefeuille, pondérations paramétrables
+   & \fait
+   & \code{services/scoring.py}, panneau de repriorisation avec curseurs \\
+
+M8 & Fiche projet : génération, versions, validation, export
+   & \partiel
+   & Génération, versionnement et décisions opérationnels ; export en JSON et HTML
+     imprimable, pas de génération \code{.docx} \\
+
+M9 & Suivi du cycle de vie : phases, jalons, tâches, risques, gates
+   & \partiel
+   & API complète (16 endpoints \code{/projects}) mais aucun écran de gestion de
+     projet dédié \\
+
+M10 & Pilotage de la valeur : TCO, gains, ROI, payback
+   & \fait
+   & \code{services/value.py}, 9 endpoints \code{/value}, écran Valeur \& ROI \\
+
+M11 & Tableaux de bord et agrégations
+   & \fait
+   & 4 endpoints \code{/dashboards}, vues Direction et Département \\
+
+M12 & Administration et journal d'audit immuable
+   & \partiel
+   & Journal complet et écran dédié ; notifications persistées mais sans écran de
+     consultation \\
+\end{longtable}
+
+\begin{ecart}
+Trois modules ne sont que partiellement couverts, et il serait malhonnête de les
+présenter autrement.
+
+\textbf{M8 — export.} Le cahier des charges prévoyait un export bureautique. Le bouton
+de l'interface porte encore le libellé « Export Word / PDF » alors que l'API produit du
+JSON et une page HTML mise en page pour l'impression. L'utilisateur obtient bien un PDF
+en passant par la fonction d'impression de son navigateur, mais aucun fichier
+\code{.docx} n'est généré. Le libellé est donc en avance sur la fonction.
+
+\textbf{M9 — interface de suivi.} Les endpoints existent et sont protégés : phases,
+jalons, tâches, risques, mitigations, incidents et passage de gates. Aucun écran dédié
+ne les expose. Le PMO retrouve ses projets, leur avancement et leur prochaine gate dans
+le tableau de bord de département, ce qui couvre le pilotage mais pas la gestion
+détaillée des tâches.
+
+\textbf{M12 — notifications.} La table et les endpoints existent, l'icône de cloche de
+l'en-tête affiche une pastille de non-lu, mais aucun panneau ne permet de lire les
+notifications.
+\end{ecart}
+
+\section{Besoins non fonctionnels}
+
+\begin{longtable}{@{}L{3.4cm} L{10.8cm}@{}}
+\caption{Besoins non fonctionnels et traitement retenu}
+\label{tab:nfr}\\
+\toprule
+\textbf{Exigence} & \textbf{Traitement dans l'application} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Exigence} & \textbf{Traitement dans l'application} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+
+Étanchéité des tenants
+& Toute table métier porte \code{organization\_id}. Le jeton JWT transporte
+  l'identifiant du tenant et la dépendance \code{get\_tenant\_id} le lit depuis le
+  jeton, jamais depuis la requête. Neuf tests couvrent ce point. \\
+
+Explicabilité
+& Trois endpoints renvoient le raisonnement et non le seul résultat :
+  \code{/opportunities/\{id\}/score}, \code{/opportunities/\{id\}/qualify} et
+  \code{/diagnostic/readiness}. \\
+
+Traçabilité
+& Journal \code{audit\_log} en insertion seule : l'API n'expose ni mise à jour ni
+  suppression sur cette table. Chaque entrée conserve auteur, horodatage, entité,
+  ancienne et nouvelle valeur, et adresse IP. \\
+
+Sécurité des accès
+& Authentification par jeton JWT signé HS256, mots de passe hachés avec bcrypt,
+  contrôle de permission sur chaque endpoint sensible. \\
+
+Robustesse du schéma
+& Migrations Alembic versionnées, écrites pour s'appliquer sur une base déjà peuplée
+  sans perte de données. \\
+
+Maintenabilité
+& Logique métier isolée dans sept services sans dépendance à FastAPI, donc testables
+  indépendamment du transport HTTP. \\
+
+Ergonomie
+& Interface en français, navigation et actions dérivées des permissions réelles,
+  responsive jusqu'à 390~pixels de large. \\
+\end{longtable}
+
+\section{Contraintes}
+
+\begin{itemize}
+  \item \textbf{Contrainte réglementaire.} Le périmètre GxP impose que toute
+    recommandation reste explicable et qu'une validation humaine subsiste. Le moteur de
+    qualification ajoute automatiquement trois garde-fous lorsque l'opportunité est
+    déclarée GxP : validation informatique, traçabilité ALCOA+ et revue humaine
+    obligatoire.
+  \item \textbf{Contrainte de confidentialité.} Deux laboratoires concurrents peuvent
+    être hébergés sur la même instance. L'isolation ne peut pas dépendre du bon
+    comportement du frontend.
+  \item \textbf{Contrainte de langue.} L'interface et les données de démonstration sont
+    en français, ce qui a imposé une attention particulière aux jeux de caractères,
+    notamment pour l'export CSV destiné à Excel.
+  \item \textbf{Contrainte d'environnement.} Le développement s'est fait sous Windows
+    avec PowerShell, ce qui a influencé la documentation d'installation.
+\end{itemize}
+
+\section{Méthodologie adoptée}
+
+Le développement a suivi une progression par couches, du socle vers l'interface, avec
+validation à chaque étape.
+
+\begin{enumerate}
+  \item \textbf{Modélisation des données.} Les 34~tables ont été définies avant tout
+    développement d'API, puis figées par une migration Alembic initiale.
+  \item \textbf{Services métier.} Readiness, qualification, priorisation et
+    valorisation ont été écrits comme des fonctions pures, testables sans base de
+    données ni serveur.
+  \item \textbf{Exposition HTTP.} Les routers FastAPI se contentent d'orchestrer :
+    vérifier les droits, charger les entités, appeler le service, journaliser.
+  \item \textbf{Jeu de démonstration.} Un seed réaliste a été construit tôt, pour que
+    chaque écran soit développé face à des données crédibles plutôt qu'à des tableaux
+    vides.
+  \item \textbf{Interface.} Les écrans ont été développés un par un, chacun vérifié par
+    capture dans un navigateur réel avant de passer au suivant.
+  \item \textbf{Durcissement.} Le contrôle d'accès a été repris en profondeur dans un
+    second temps, une fois les fonctionnalités stabilisées, et couvert par une suite de
+    tests dédiée.
+\end{enumerate}
+
+Cette dernière étape mérite d'être soulignée : la première version du contrôle d'accès
+ne comptait que dix permissions, toutes en écriture. Les quarante-six endpoints de
+lecture n'étaient protégés que par l'authentification, ce qui laissait tout utilisateur
+connecté lire l'intégralité de son organisation. La reprise a porté le catalogue à
+41~permissions et introduit la notion de périmètre.

@@ -1,0 +1,100 @@
+% =====================================================================
+%  Annexe B — Références et webographie
+% =====================================================================
+\chapter{Références et webographie}
+\label{ann:references}
+
+Les références ci-dessous correspondent aux documentations effectivement consultées
+pendant la réalisation, ainsi qu'aux cadres méthodologiques mentionnés dans le rapport.
+Les dates de consultation sont à compléter si l'établissement l'exige.
+
+\section*{Documentations techniques}
+
+\begin{enumerate}[label={[\arabic*]}, leftmargin=*, itemsep=5pt]
+  \item \textbf{FastAPI} — documentation officielle du framework, notamment les
+    chapitres sur l'injection de dépendances et la sécurité.\\
+    \url{https://fastapi.tiangolo.com/}
+
+  \item \textbf{SQLAlchemy 2.0} — guide de l'ORM en style déclaratif typé.\\
+    \url{https://docs.sqlalchemy.org/en/20/}
+
+  \item \textbf{Alembic} — documentation des migrations de schéma.\\
+    \url{https://alembic.sqlalchemy.org/}
+
+  \item \textbf{Pydantic v2} — validation et sérialisation des données.\\
+    \url{https://docs.pydantic.dev/latest/}
+
+  \item \textbf{PostgreSQL} — manuel de référence.\\
+    \url{https://www.postgresql.org/docs/}
+
+  \item \textbf{React} — documentation officielle.\\
+    \url{https://react.dev/}
+
+  \item \textbf{TypeScript} — manuel du langage.\\
+    \url{https://www.typescriptlang.org/docs/}
+
+  \item \textbf{Vite} — documentation de l'outil de build.\\
+    \url{https://vite.dev/}
+
+  \item \textbf{React Router} — routage côté client.\\
+    \url{https://reactrouter.com/}
+
+  \item \textbf{TanStack Query} — gestion du cache de données serveur.\\
+    \url{https://tanstack.com/query/latest}
+
+  \item \textbf{Recharts} — bibliothèque de graphiques pour React.\\
+    \url{https://recharts.org/}
+
+  \item \textbf{pytest} — documentation du cadre de test.\\
+    \url{https://docs.pytest.org/}
+
+  \item \textbf{Docker Compose} — référence du fichier de composition.\\
+    \url{https://docs.docker.com/compose/}
+\end{enumerate}
+
+\section*{Normes et spécifications}
+
+\begin{enumerate}[label={[\arabic*]}, leftmargin=*, itemsep=5pt, start=14]
+  \item \textbf{RFC 7519} — \emph{JSON Web Token (JWT)}, Internet Engineering Task
+    Force, mai 2015. Spécification du format de jeton utilisé pour
+    l'authentification.\\
+    \url{https://datatracker.ietf.org/doc/html/rfc7519}
+
+  \item \textbf{RFC 6749} — \emph{The OAuth 2.0 Authorization Framework}, IETF, octobre
+    2012. Cadre dont FastAPI reprend le flux par mot de passe pour le formulaire de
+    connexion.\\
+    \url{https://datatracker.ietf.org/doc/html/rfc6749}
+
+  \item \textbf{Spécification OpenAPI} — format de description d'API généré
+    automatiquement par l'application sur \code{/docs}.\\
+    \url{https://spec.openapis.org/}
+
+  \item \textbf{bcrypt} — Provos, N. et Mazières, D., \emph{A Future-Adaptable Password
+    Scheme}, USENIX Annual Technical Conference, 1999. Algorithme de hachage employé
+    pour les mots de passe.
+\end{enumerate}
+
+\section*{Cadres méthodologiques et référentiels métier}
+
+\begin{enumerate}[label={[\arabic*]}, leftmargin=*, itemsep=5pt, start=18]
+  \item \textbf{TOGAF} — \emph{The Open Group Architecture Framework}, The Open Group.
+    Cadre dont s'inspirent le découpage du diagnostic AS-IS et le séquencement des
+    phases de projet employés dans la plateforme.\\
+    \url{https://www.opengroup.org/togaf}
+
+  \item \textbf{Bonnes pratiques GxP} — ensemble des bonnes pratiques applicables à
+    l'industrie pharmaceutique (fabrication, laboratoire, distribution), qui fondent
+    les garde-fous ajoutés automatiquement par le moteur de qualification lorsqu'une
+    opportunité est déclarée en périmètre réglementé.
+
+  \item \textbf{Principes ALCOA+} — exigences d'intégrité des données réglementées
+    (attribuable, lisible, contemporain, original, exact, complet, cohérent, durable,
+    disponible). Ces principes justifient le caractère immuable du journal d'audit.
+\end{enumerate}
+
+\begin{remarque}[Sur la portée de cette liste]
+Cette webographie recense les sources techniques réellement utilisées. Les références
+méthodologiques TOGAF, GxP et ALCOA+ ont servi de cadre conceptuel au découpage
+fonctionnel ; la plateforme s'en inspire sans prétendre à une conformité certifiée,
+laquelle relèverait d'une démarche de validation formelle non menée dans ce projet.
+\end{remarque}

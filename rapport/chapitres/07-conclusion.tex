@@ -1,0 +1,134 @@
+% =====================================================================
+%  Conclusion générale
+% =====================================================================
+\chapter*{Conclusion générale}
+\addcontentsline{toc}{chapter}{Conclusion générale}
+\markboth{Conclusion générale}{}
+\label{chap:conclusion}
+
+\section*{Bilan du travail réalisé}
+
+Le projet a abouti à une plateforme fonctionnelle couvrant le parcours complet de
+l'adoption de l'intelligence artificielle dans une organisation pharmaceutique, du
+diagnostic de maturité à la mesure de la valeur captée.
+
+En chiffres, la réalisation représente 34~tables, 99~endpoints répartis en dix domaines
+fonctionnels, sept services métier isolés du transport HTTP, trois migrations de schéma,
+quatorze écrans, 41~permissions, onze rôles, cinq niveaux de périmètre et 112~tests
+automatisés qui passent.
+
+Neuf des douze modules du cahier des charges sont pleinement implémentés. Trois le sont
+partiellement, et le chapitre~\ref{chap:analyse} en détaille l'écart sans le minimiser :
+l'export bureautique de la fiche projet produit du HTML imprimable plutôt qu'un fichier
+\code{.docx}, le suivi de projet dispose de son API mais pas de son écran dédié, et les
+notifications sont persistées sans panneau de consultation.
+
+Trois choix de conception structurent l'ensemble.
+
+\textbf{L'explicabilité comme contrainte de départ, non comme option.} Chaque calcul
+renvoie sa décomposition : le readiness rend ses dimensions avec leur preuve, le score
+de priorité rend la contribution de ses six critères, la recommandation rend ses règles
+satisfaites, ses alternatives écartées et ses garde-fous. Cette contrainte a orienté le
+modèle de données — les explications sont persistées en JSON — autant que les formules.
+
+\textbf{La sécurité côté serveur, exclusivement.} L'interface adapte ce qu'elle affiche
+aux droits de l'utilisateur, mais aucune décision d'accès ne lui est déléguée. Les
+tests d'autorisation appellent l'API directement, sans passer par l'interface, parce que
+c'est ainsi qu'un attaquant procéderait.
+
+\textbf{La séparation entre calcul et exposition.} Aucune formule ne vit dans un router.
+Cette discipline a rendu les algorithmes testables sans serveur ni base de données, et
+c'est ce qui a permis de les corriger tard dans le projet sans crainte de régression.
+
+\section*{Limites de la version actuelle}
+
+Les limites ci-dessous sont réelles et constatées dans le code livré.
+
+\textbf{Aucun modèle d'apprentissage.} La plateforme recommande des solutions
+d'intelligence artificielle sans en contenir aucune. Le moteur de qualification est un
+système de règles pondérées : il ne découvre rien qu'un expert n'ait prévu et n'apprend
+pas des décisions passées. Ce choix est argumenté à la section~\ref{sec:pas-dia} ; il
+n'en reste pas moins une limite.
+
+\textbf{La détection de doublons est lexicale.} Le croisement interservices repère les
+termes partagés entre deux expressions de besoin. Deux besoins identiques formulés avec
+des vocabulaires métier différents ne sont pas rapprochés.
+
+\textbf{Le suivi de projet n'a pas d'écran.} Phases, jalons, tâches, risques,
+mitigations, incidents et passage de gates sont pilotables par l'API, pas par
+l'interface. Le PMO retrouve l'avancement et la prochaine gate dans son tableau de bord,
+ce qui couvre le pilotage mais pas la gestion détaillée.
+
+\textbf{L'export bureautique n'existe pas.} Le libellé du bouton est en avance sur la
+fonction.
+
+\textbf{Pas de réinitialisation de mot de passe autonome.} Un utilisateur qui oublie son
+mot de passe doit s'adresser à l'administrateur de son organisation.
+
+\textbf{Pas de rafraîchissement de jeton.} Le jeton est valable douze heures, après quoi
+l'utilisateur se reconnecte. Il n'existe ni jeton de rafraîchissement, ni liste de
+révocation : un jeton volé reste exploitable jusqu'à son expiration. La seule parade
+actuelle est la désactivation du compte, qui est bien effective à chaque requête — le
+serveur vérifie l'état du compte après avoir validé le jeton — mais qui suppose de
+désactiver l'utilisateur légitime.
+
+\textbf{Configuration par défaut à durcir.} La clé de signature et le mot de passe du
+superutilisateur initial portent des valeurs par défaut qui doivent impérativement être
+redéfinies avant toute mise en production.
+
+\textbf{Écart d'environnement.} Le développement s'est fait sur PostgreSQL~12.4 en
+local, tandis que le fichier Docker déclare PostgreSQL~16. Aucune fonctionnalité
+spécifique à la version~16 n'est utilisée, mais l'écart n'a pas été validé en
+conditions réelles.
+
+\section*{Perspectives}
+
+Les évolutions ci-dessous sont des propositions. Aucune n'est implémentée.
+
+\textbf{Assistance par modèle de langage, en entrée du moteur.} Un modèle pourrait
+pré-remplir les quinze faits de qualification à partir d'une description libre du
+besoin, rédiger un premier jet de fiche projet et détecter des doublons sémantiques
+là où la comparaison lexicale échoue. Le principe directeur serait de laisser le modèle
+\emph{proposer des entrées} et le moteur de règles \emph{décider} : la traçabilité de la
+décision resterait intacte, et le gain se situerait sur la saisie, qui est aujourd'hui
+le point de friction.
+
+\textbf{Apprentissage sur l'historique des décisions.} Après plusieurs dizaines de
+cycles complets — qualification, décision de comité, résultat mesuré — l'organisation
+disposerait enfin d'un corpus. Les pondérations de priorisation pourraient alors être
+calibrées sur les projets qui ont réellement tenu leurs promesses, plutôt que fixées
+a~priori.
+
+\textbf{Écran de pilotage de projet.} Exposer l'API de suivi déjà en place :
+diagramme de Gantt des jalons, tableau des tâches, matrice des risques et parcours de
+gates.
+
+\textbf{Export bureautique réel.} Générer un fichier \code{.docx} ou un PDF mis en page
+côté serveur, pour aligner la fonction sur le libellé.
+
+\textbf{Notifications actionnables.} Panneau de consultation, marquage lu et non lu, et
+déclenchement sur les événements qui appellent une action : gate à franchir, indicateur
+qui décroche, décision de comité en attente.
+
+\textbf{Durcissement de l'authentification.} Jeton de rafraîchissement, révocation côté
+serveur, réinitialisation autonome du mot de passe et, en périmètre réglementé,
+authentification à deux facteurs.
+
+\textbf{Exploitation des périmètres par site.} Le modèle porte déjà le rattachement des
+utilisateurs aux sites et le niveau de périmètre correspondant. Les filtres appliqués
+aujourd'hui s'arrêtent au département ; étendre le bornage au site serait une extension
+naturelle du dispositif existant.
+
+\section*{Apport personnel}
+
+Ce projet a demandé de tenir ensemble trois exigences qui se contredisent
+régulièrement : la richesse fonctionnelle, la rigueur du contrôle d'accès et
+l'honnêteté sur ce que le système fait réellement.
+
+La dernière est celle qui a le plus appris. Il aurait été facile de présenter le moteur
+de qualification comme une intelligence artificielle : le vocabulaire du domaine s'y
+prête, et personne n'aurait vérifié. Choisir de le nommer pour ce qu'il est — un système
+expert à base de règles — et d'argumenter pourquoi ce choix est adapté au problème posé
+s'est révélé plus solide que l'inverse. Un moteur explicable se défend devant un comité,
+devant un inspecteur et devant un jury ; un modèle qu'on ne sait pas justifier ne se
+défend nulle part.
